@@ -15,14 +15,30 @@ import SearchBar from './components/SearchBar'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Verify from './pages/Verify'
+import { useState, useEffect } from 'react';
 
 
 
 const App = () => {
+
+    // Set initial theme based on local storage or default to light mode
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  
+    useEffect(() => {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme); // Save theme preference
+    }, [theme]);
+  
+    const toggleTheme = () => {
+      setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    }
+  
+
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       <ToastContainer />
       <Navbar />
+      <button onClick={toggleTheme}> {theme === 'light' ? 'Dark' : 'Light'}</button>
       <SearchBar />
       <Routes>
         <Route path='/' element={<Home/>}></Route>
