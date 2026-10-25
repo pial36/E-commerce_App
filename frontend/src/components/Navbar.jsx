@@ -3,7 +3,16 @@ import {assets} from '../assets/assets'
 import { Link, NavLink } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 
-const Navbar = () => {
+const navLinks = [
+  { to: '/', label: 'Home' },
+  { to: '/collection', label: 'Collection' },
+  { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
+]
+
+const iconButton = 'p-0 border-0 bg-transparent cursor-pointer flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 transition-colors'
+
+const Navbar = ({ theme, toggleTheme }) => {
 
     const [visible,setVisible] = useState(false);
 
@@ -11,7 +20,6 @@ const Navbar = () => {
 
     const logout =() => {
 
-      navigate('/login')
       localStorage.removeItem('token')
       setToken('')
       setCartItems({});
@@ -20,77 +28,86 @@ const Navbar = () => {
     }
 
   return (
-    <div className='flex items-center justify-between py-5 font-medium'>
-      
-      <Link to='/'><img src={assets.logo} className='w-36' alt="" /></Link>
+    <header className='sticky top-0 z-40 -mx-4 px-4 sm:-mx-[5vw] sm:px-[5vw] md:-mx-[7vw] md:px-[7vw] lg:-mx-[9vw] lg:px-[9vw] bg-[var(--background-color)] border-b border-gray-200'>
+      <div className='grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_1fr] items-center h-20 sm:h-24 font-medium'>
 
-      <ul className='hidden sm:flex gap-5 text-sm text-gray-700'>
-
-        <NavLink to='/' className='flex flex-col items-center gap-1'>
-          <p>Home</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-
-        </NavLink>
-
-        <NavLink to='/collection' className='flex flex-col items-center gap-1'>
-          <p>Collection</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-
-        </NavLink>
-        <NavLink to='/about' className='flex flex-col items-center gap-1'>
-          <p>About</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-
-        </NavLink>
-        <NavLink to='/contact' className='flex flex-col items-center gap-1'>
-          <p>Contact</p>
-          <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
-
-        </NavLink>
-      </ul>
-
-      <div className='flex items-center gap-6'>
-        <img onClick={()=>setShowSearch(true)} src={assets.search_icon} className='w-5 cursor-pointer' alt="" />
-
-        <div className='group relative'>
-          <img onClick={()=> token ? null : navigate('/login')} className='w-5 cursor-pointer' src={assets.profile_icon} alt="" />
-
-            {/* -----DropDown------- */}
-          {token && 
-          <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-4'>
-            <div className='flex flex-col gap-2 w-36 py-3 px-5 bg-slate-100 text-gray-500 rounded'>
-              <p className='cursor-pointer hover:text-black'>My Profile</p>
-              <p onClick={()=>navigate('/orders')} className='cursor-pointer hover:text-black'>Order</p>
-              <p onClick={logout} className='cursor-pointer hover:text-black'>Logout</p>
-            </div>
-          </div>}
-        </div>
-        <Link to='/cart' className='relative'>
-            <img src={assets.cart_icon} className='w-5 min-w-5' alt="" />
-            <p className='absolute right-[-5px] bottom-[-5px] w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]'>{getCartCount()}</p>
+        {/* Brand logo */}
+        <Link to='/' className='justify-self-start'>
+          <img src={assets.logo} className='h-14 sm:h-16 w-auto' alt="Velariq Fashion" />
         </Link>
-        <img onClick={()=>setVisible(true)} src={assets.menu_icon} className='w-5 cursor-pointer sm:hidden' alt="" />
 
+        {/* Main navigation */}
+        <nav className='hidden sm:flex gap-8 lg:gap-10 text-xs tracking-[0.2em] uppercase text-gray-700'>
+          {
+            navLinks.map((link)=>(
+              <NavLink key={link.to} to={link.to} className='flex flex-col items-center gap-1 hover:text-black transition-colors'>
+                <p>{link.label}</p>
+                <hr className='w-2/4 border-none h-[1.5px] bg-gray-700 hidden'/>
+              </NavLink>
+            ))
+          }
+        </nav>
+
+        {/* Utility icons */}
+        <div className='justify-self-end flex items-center gap-1 sm:gap-2'>
+
+          <button onClick={()=>setShowSearch(true)} aria-label='Search' className={iconButton}>
+            <img src={assets.search_icon} className='nav-icon w-[18px]' alt="" />
+          </button>
+
+          <div className='group relative'>
+            <button onClick={()=> token ? null : navigate('/login')} aria-label='Account' className={iconButton}>
+              <img className='nav-icon w-[18px]' src={assets.profile_icon} alt="" />
+            </button>
+
+              {/* -----DropDown------- */}
+            {token &&
+            <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-3 z-50'>
+              <div className='flex flex-col gap-2 w-40 py-3 px-5 bg-white text-gray-500 text-sm rounded shadow-lg border border-gray-100'>
+                <p className='cursor-pointer hover:text-black'>My Profile</p>
+                <p onClick={()=>navigate('/orders')} className='cursor-pointer hover:text-black'>Orders</p>
+                <p onClick={logout} className='cursor-pointer hover:text-black'>Logout</p>
+              </div>
+            </div>}
+          </div>
+
+          <Link to='/cart' aria-label='Cart' className={`${iconButton} relative`}>
+              <img src={assets.cart_icon} className='nav-icon w-[18px] min-w-[18px]' alt="" />
+              <p className='absolute right-0.5 bottom-0.5 w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]'>{getCartCount()}</p>
+          </Link>
+
+          {/* Theme toggle */}
+          <button onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} className={`${iconButton} text-gray-700`}>
+            {
+              theme === 'light'
+              ? <svg className='w-[18px] h-[18px]' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'><path d='M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z'/></svg>
+              : <svg className='w-[18px] h-[18px]' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round'><circle cx='12' cy='12' r='4'/><path d='M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4'/></svg>
+            }
+          </button>
+
+          <button onClick={()=>setVisible(true)} aria-label='Open menu' className={`${iconButton} sm:hidden`}>
+            <img src={assets.menu_icon} className='nav-icon w-[18px]' alt="" />
+          </button>
+
+        </div>
       </div>
 
-      {/*sideber manu for small screens*/ }
-      <div className={`absolute top-0 right-0 bottom-0 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'}`}>
-              <div className='flex flex-col  text-gray-600'>
+      {/*sidebar menu for small screens*/ }
+      <div className={`fixed top-0 right-0 bottom-0 z-50 overflow-hidden bg-white transition-all ${visible ? 'w-full' : 'w-0'}`}>
+              <div className='flex flex-col text-gray-600'>
                   <div onClick={()=>setVisible(false)} className='flex items-center gap-4 p-3 cursor-pointer'>
                       <img className='h-4 rotate-180' src={assets.dropdown_icon} alt="" />
                       <p>Back</p>
                   </div >
-                  <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border-b' to='/'>HOME</NavLink>
-                  <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border-b' to='/collection'>COLLECTION</NavLink>
-                  <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border-b' to='/about'>ABOUT</NavLink>
-                  <NavLink onClick={()=>setVisible(false)} className='py-2 pl-6 border-b' to='/contact'>CONTACT</NavLink>
-              </div> 
-      
-      </div> 
+                  {
+                    navLinks.map((link)=>(
+                      <NavLink key={link.to} onClick={()=>setVisible(false)} className='py-2 pl-6 border-b uppercase' to={link.to}>{link.label}</NavLink>
+                    ))
+                  }
+              </div>
+      </div>
 
-
-
-    </div>
+    </header>
   )
 }
 

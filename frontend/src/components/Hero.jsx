@@ -56,7 +56,7 @@ const Hero = () => {
 
   return (
     <div
-      className='relative border border-gray-400'
+      className='relative mt-6 sm:mt-8 border border-gray-400'
       onMouseEnter={()=>setPaused(true)}
       onMouseLeave={()=>setPaused(false)}
       onTouchStart={()=>setPaused(true)}
@@ -66,7 +66,7 @@ const Hero = () => {
       <div
         ref={trackRef}
         onScroll={onScroll}
-        className='flex overflow-x-auto snap-x snap-mandatory [scrollbar-width:none]'
+        className='flex overflow-x-auto snap-x snap-mandatory no-scrollbar'
       >
         {
           slides.map((image,index)=>(
