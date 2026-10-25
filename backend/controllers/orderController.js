@@ -1,5 +1,6 @@
 import orderModel from "../models/orderModel.js"
 import userModel from "../models/userModel.js"
+import productModel from "../models/productModel.js"
 import Stripe from 'stripe'
 import razorpay from 'razorpay'
 
@@ -16,12 +17,52 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 //     key_secret : process.env.RAZORPAY_KEY_SECRET,
 // })
 
+// Build order items from the database so the client can't set prices.
+// Only _id, size and quantity are taken from the request.
+const buildOrderItems = async (requestItems) => {
+    if (!Array.isArray(requestItems) || requestItems.length === 0) {
+        throw new Error("Cart is empty")
+    }
+
+    const items = []
+    for (const requestItem of requestItems) {
+        const quantity = Number(requestItem.quantity)
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            throw new Error("Invalid quantity")
+        }
+
+        const product = await productModel.findById(requestItem._id)
+        if (!product) {
+            throw new Error("Product not found")
+        }
+        if (!product.sizes.includes(requestItem.size)) {
+            throw new Error(`Size not available for ${product.name}`)
+        }
+
+        items.push({
+            _id: product._id.toString(),
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            category: product.category,
+            subCategory: product.subCategory,
+            size: requestItem.size,
+            quantity
+        })
+    }
+
+    const amount = items.reduce((sum, item) => sum + item.price * item.quantity, 0) + deliveryCharges
+
+    return { items, amount }
+}
+
 //  Placing Order using COD method
 const placeOrder = async (req,res) => {
 
     try {
-       
-        const { userId, items, amount, address, } = req.body
+
+        const { userId, address } = req.body
+        const { items, amount } = await buildOrderItems(req.body.items)
 
         const orderData = {
             userId,
@@ -54,7 +95,8 @@ const placeOrder = async (req,res) => {
 const placeOrderStripe = async (req,res) => {
     try {
         
-        const { userId, items, amount, address, } = req.body
+        const { userId, address } = req.body
+        const { items, amount } = await buildOrderItems(req.body.items)
         const { origin } = req.headers;
 
         const orderData = {
@@ -76,7 +118,7 @@ const placeOrderStripe = async (req,res) => {
                 product_data: {
                     name:item.name
                 },
-                unit_amount: item.price * 100
+                unit_amount: Math.round(item.price * 100)
             },
             quantity: item.quantity
         }))
@@ -100,6 +142,9 @@ const placeOrderStripe = async (req,res) => {
 
         })
 
+        newOrder.stripeSessionId = session.id
+        await newOrder.save()
+
         res.json({success:true,session_url:session.url})
 
     } catch (error) {
@@ -109,18 +154,32 @@ const placeOrderStripe = async (req,res) => {
 }
 
 // Verify Stripe
+// Payment status comes from Stripe, not from the `success` query param,
+// and only the user who placed the order can verify or cancel it.
 const verifyStripe = async (req,res) => {
 
-    const { orderId, success, userId } = req.body
+    const { orderId, userId } = req.body
 
     try {
-        if (success === 'true') {
-            await orderModel.findByIdAndUpdate(orderId, {payment:true});
+        const order = await orderModel.findOne({ _id: orderId, userId })
+        if (!order || !order.stripeSessionId) {
+            return res.json({success: false, message: "Order not found"})
+        }
+
+        if (order.payment) {
+            return res.json({success: true})
+        }
+
+        const session = await stripe.checkout.sessions.retrieve(order.stripeSessionId)
+
+        if (session.payment_status === 'paid') {
+            order.payment = true
+            await order.save()
             await userModel.findByIdAndUpdate(userId, {cartData: {}})
             res.json({success: true});
 
         } else {
-            await orderModel.findByIdAndDelete(orderId)
+            await orderModel.deleteOne({ _id: order._id, payment: false })
             res.json({success:false})
         }
     } catch (error) {
