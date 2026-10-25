@@ -37,8 +37,7 @@ const App = () => {
   return (
     <div className='px-4 sm:px-[5vw] md:px-[7vw] lg:px-[9vw]'>
       <ToastContainer />
-      <Navbar />
-      <button onClick={toggleTheme}> {theme === 'light' ? 'Dark' : 'Light'}</button>
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
       <SearchBar />
       <Routes>
         <Route path='/' element={<Home/>}></Route>
