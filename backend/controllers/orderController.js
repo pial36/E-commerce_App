@@ -7,7 +7,11 @@ import razorpay from 'razorpay'
 
 // global variable 
 const currency = 'usd'
-const deliveryCharges = 10
+// Shipping rates live on the server; the client only picks a method
+const shippingRates = {
+    inside_dhaka: { label: 'Inside Dhaka', fee: 100 },
+    outside_dhaka: { label: 'Outside Dhaka', fee: 150 },
+}
 
 // gateway initialize 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
@@ -19,7 +23,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 // Build order items from the database so the client can't set prices.
 // Only _id, size and quantity are taken from the request.
-const buildOrderItems = async (requestItems) => {
+const buildOrderItems = async (requestItems, shippingMethod = 'inside_dhaka') => {
+    const shipping = shippingRates[shippingMethod]
+    if (!shipping) {
+        throw new Error("Invalid shipping method")
+    }
+
     if (!Array.isArray(requestItems) || requestItems.length === 0) {
         throw new Error("Cart is empty")
     }
@@ -51,9 +60,9 @@ const buildOrderItems = async (requestItems) => {
         })
     }
 
-    const amount = items.reduce((sum, item) => sum + item.price * item.quantity, 0) + deliveryCharges
+    const amount = items.reduce((sum, item) => sum + item.price * item.quantity, 0) + shipping.fee
 
-    return { items, amount }
+    return { items, amount, shipping: { method: shippingMethod, label: shipping.label, fee: shipping.fee } }
 }
 
 //  Placing Order using COD method
@@ -62,13 +71,14 @@ const placeOrder = async (req,res) => {
     try {
 
         const { userId, address } = req.body
-        const { items, amount } = await buildOrderItems(req.body.items)
+        const { items, amount, shipping } = await buildOrderItems(req.body.items, req.body.shippingMethod)
 
         const orderData = {
             userId,
             items,
             amount,
             address,
+            shipping,
             paymentMethod:"COD",
             payment:false,
             date: Date.now()
@@ -96,7 +106,7 @@ const placeOrderStripe = async (req,res) => {
     try {
         
         const { userId, address } = req.body
-        const { items, amount } = await buildOrderItems(req.body.items)
+        const { items, amount, shipping } = await buildOrderItems(req.body.items, req.body.shippingMethod)
         const { origin } = req.headers;
 
         const orderData = {
@@ -104,6 +114,7 @@ const placeOrderStripe = async (req,res) => {
             items,
             amount,
             address,
+            shipping,
             paymentMethod:"Stripe",
             payment:false,
             date: Date.now()
@@ -127,9 +138,9 @@ const placeOrderStripe = async (req,res) => {
             price_data: {
                 currency:currency,
                 product_data: {
-                    name:'Delivery Charges'
+                    name:`Delivery Charges (${shipping.label})`
                 },
-                unit_amount: deliveryCharges * 100
+                unit_amount: shipping.fee * 100
             },
             quantity: 1
         })

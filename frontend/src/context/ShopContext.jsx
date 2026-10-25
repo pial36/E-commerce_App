@@ -8,7 +8,12 @@ export const ShopContext = createContext();
  export const ShopContextProvider = (props) => {
 
     const currency ='৳';
-    const delivery_fee = 10;
+    // must match shippingRates in backend/controllers/orderController.js
+    const shippingRates = {
+        inside_dhaka: { label: 'Inside Dhaka', fee: 100 },
+        outside_dhaka: { label: 'Outside Dhaka', fee: 150 },
+    };
+    const delivery_fee = shippingRates.inside_dhaka.fee;
     const backendUrl = import.meta.env.VITE_BACKEND_URL
     const [search,setSearch] = useState('');
     const [showSearch,setShowSearch] = useState(false);
@@ -162,7 +167,7 @@ export const ShopContext = createContext();
     
 
     const value = {
-        products ,currency, delivery_fee,
+        products ,currency, delivery_fee, shippingRates,
         search,setSearch,showSearch,setShowSearch,
         cartItems,setCartItems,addToCart,
         getCartCount,updateQuantity,

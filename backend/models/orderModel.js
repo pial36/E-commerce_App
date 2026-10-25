@@ -5,6 +5,7 @@ const orderSchema = new mongoose.Schema({
     items: { type: Array, require: true },
     amount: { type: Number, require: true },
     address: { type: Object, require: true },
+    shipping: { type: Object },
     status: { type: String, require: true, default:'Order Placed' },
     paymentMethod: { type: String, required: true },
     payment: { type: Boolean, required: true, default: false },
