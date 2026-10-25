@@ -1,6 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 
+const HomeIcon = ({ className }) => (
+  <svg className={className} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
+    <path d='M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z'/>
+  </svg>
+)
+
+const roundButton = 'p-0 border-0 bg-white text-gray-800 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.15)] flex items-center justify-center hover:bg-gray-50'
+
 const TrashIcon = ({ className }) => (
   <svg className={className} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.6' strokeLinecap='round' strokeLinejoin='round'>
     <path d='M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6'/>
@@ -66,13 +74,21 @@ const CartDrawer = () => {
       <aside
         role='dialog'
         aria-label='Shopping cart'
-        className={`absolute top-0 right-0 h-full w-full sm:w-[400px] bg-white text-gray-800 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`absolute top-0 right-0 h-full w-[85%] sm:w-[400px] bg-white text-gray-800 shadow-2xl flex flex-col transition-transform duration-300 ease-out ${cartOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
 
+        {/* Back: floats in the strip of page left visible beside the panel */}
+        <button onClick={close} aria-label='Back' className={`${roundButton} absolute top-3 -left-[50px] sm:-left-16 w-11 h-11 text-lg transition-opacity duration-300 ${cartOpen ? 'opacity-100' : 'opacity-0'}`}>&#8249;</button>
+
         {/* Header */}
-        <div className='flex items-center justify-between px-6 h-16 border-b border-gray-200'>
+        <div className='flex items-center justify-between pl-5 pr-3 sm:px-6 h-16 border-b border-gray-200'>
           <p className='text-sm font-semibold tracking-[0.15em]'>SHOPPING CART</p>
-          <button onClick={close} aria-label='Close cart' className='p-0 border-0 bg-transparent text-gray-700 hover:text-black text-2xl leading-none'>&times;</button>
+          <div className='flex items-center gap-3'>
+            <button onClick={()=>goTo('/')} aria-label='Go to home page' className={`${roundButton} w-10 h-10`}>
+              <HomeIcon className='w-[18px] h-[18px]' />
+            </button>
+            <button onClick={close} aria-label='Close cart' className='hidden sm:block p-0 border-0 bg-transparent text-gray-700 hover:text-black text-2xl leading-none'>&times;</button>
+          </div>
         </div>
 
         {/* Items */}
@@ -86,7 +102,7 @@ const CartDrawer = () => {
             : <div className='divide-y divide-gray-100'>
                 {
                   lines.map((line)=>(
-                    <div key={line.product._id + line.size} className='flex gap-4 px-6 py-5'>
+                    <div key={line.product._id + line.size} className='flex gap-4 px-5 sm:px-6 py-5'>
                       <img onClick={()=>goTo(`/product/${line.product._id}`)} src={line.product.image[0]} className='w-24 h-28 object-cover bg-gray-50 cursor-pointer' alt={line.product.name} />
                       <div className='flex-1 min-w-0'>
                         <p onClick={()=>goTo(`/product/${line.product._id}`)} className='text-sm font-medium truncate cursor-pointer hover:underline'>{line.product.name}</p>
