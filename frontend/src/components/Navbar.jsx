@@ -16,7 +16,7 @@ const Navbar = ({ theme, toggleTheme }) => {
 
     const [visible,setVisible] = useState(false);
 
-    const {setShowSearch , getCartCount, navigate, token, setToken, setCartItems} = useContext(ShopContext);
+    const {setShowSearch , getCartCount, navigate, token, setToken, setCartItems, setCartOpen} = useContext(ShopContext);
 
     const logout =() => {
 
@@ -71,10 +71,10 @@ const Navbar = ({ theme, toggleTheme }) => {
             </div>}
           </div>
 
-          <Link to='/cart' aria-label='Cart' className={`${iconButton} relative`}>
+          <button onClick={()=>setCartOpen(true)} aria-label='Cart' className={`${iconButton} relative`}>
               <img src={assets.cart_icon} className='nav-icon w-[18px] min-w-[18px]' alt="" />
               <p className='absolute right-0.5 bottom-0.5 w-4 text-center leading-4 bg-black text-white aspect-square rounded-full text-[8px]'>{getCartCount()}</p>
-          </Link>
+          </button>
 
           {/* Theme toggle */}
           <button onClick={toggleTheme} aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} className={`${iconButton} text-gray-700`}>

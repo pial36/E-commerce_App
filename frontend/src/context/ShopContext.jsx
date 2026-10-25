@@ -15,6 +15,8 @@ export const ShopContext = createContext();
     const [cartItems,setCartItems] = useState({});
     const [products,setProducts] = useState([]);
     const [token,setToken] = useState('');
+    const [cartOpen,setCartOpen] = useState(false);
+    const [lastAddedId,setLastAddedId] = useState(null);
     const navigate = useNavigate();
 
 
@@ -38,6 +40,8 @@ export const ShopContext = createContext();
             cartData[itemId][size] = 1;
         }
         setCartItems(cartData);
+        setLastAddedId(itemId);
+        setCartOpen(true);
 
         if (token) {
             try {
@@ -163,7 +167,8 @@ export const ShopContext = createContext();
         cartItems,setCartItems,addToCart,
         getCartCount,updateQuantity,
         getCartAmount, navigate, backendUrl,
-        setToken,token
+        setToken,token,
+        cartOpen,setCartOpen,lastAddedId
     }
 
     return (
