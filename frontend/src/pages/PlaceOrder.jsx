@@ -8,6 +8,100 @@ const SAVED_ADDRESS_KEY = 'checkoutAddress'
 
 const inputClass = 'w-full border border-gray-300 rounded-md px-3.5 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900'
 
+const phoneCountries = [
+  { code: 'AU', name: 'Australia', dial: '61' },
+  { code: 'BH', name: 'Bahrain', dial: '973' },
+  { code: 'BD', name: 'Bangladesh', dial: '880' },
+  { code: 'CA', name: 'Canada', dial: '1' },
+  { code: 'FR', name: 'France', dial: '33' },
+  { code: 'DE', name: 'Germany', dial: '49' },
+  { code: 'IN', name: 'India', dial: '91' },
+  { code: 'IT', name: 'Italy', dial: '39' },
+  { code: 'JP', name: 'Japan', dial: '81' },
+  { code: 'KW', name: 'Kuwait', dial: '965' },
+  { code: 'MY', name: 'Malaysia', dial: '60' },
+  { code: 'NP', name: 'Nepal', dial: '977' },
+  { code: 'OM', name: 'Oman', dial: '968' },
+  { code: 'PK', name: 'Pakistan', dial: '92' },
+  { code: 'QA', name: 'Qatar', dial: '974' },
+  { code: 'SA', name: 'Saudi Arabia', dial: '966' },
+  { code: 'SG', name: 'Singapore', dial: '65' },
+  { code: 'LK', name: 'Sri Lanka', dial: '94' },
+  { code: 'AE', name: 'United Arab Emirates', dial: '971' },
+  { code: 'GB', name: 'United Kingdom', dial: '44' },
+  { code: 'US', name: 'United States', dial: '1' },
+]
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Bangladeshi mobile: 01XXXXXXXXX, optionally written with +880 / 880
+const BD_MOBILE_PATTERN = /^(?:\+?880|0)?1[3-9]\d{8}$/
+
+const digitsOnly = (value) => value.replace(/[\s-()]/g, '')
+
+const isValidPhone = (number, countryCode) => {
+  const digits = digitsOnly(number)
+  if (countryCode === 'BD') return BD_MOBILE_PATTERN.test(digits)
+  return /^\d{6,14}$/.test(digits.replace(/^0/, ''))
+}
+
+// "+880 1712345678" style, without the trunk 0
+const formatPhone = (number, countryCode) => {
+  const country = phoneCountries.find(item => item.code === countryCode)
+  const digits = digitsOnly(number).replace(/^\+?880/, '').replace(/^0/, '')
+  return `+${country.dial} ${digits}`
+}
+
+const validateCheckout = (form) => {
+  const errors = {}
+  const contact = form.email.trim()
+  if (!contact) errors.email = 'Enter an email or phone number'
+  else if (!EMAIL_PATTERN.test(contact) && !BD_MOBILE_PATTERN.test(digitsOnly(contact))) errors.email = 'Enter a valid email or phone number'
+  if (!form.lastName.trim()) errors.lastName = 'Enter a last name'
+  if (!form.street.trim()) errors.street = 'Enter an address'
+  if (!form.city.trim()) errors.city = 'Enter a city'
+  if (!form.phone.trim()) errors.phone = 'Enter a phone number'
+  else if (!isValidPhone(form.phone, form.phoneCountry)) errors.phone = 'Enter a valid phone number'
+  return errors
+}
+
+const HelpIcon = ({ text }) => (
+  <span title={text} aria-label={text} className='flex items-center px-3 text-gray-500 cursor-help'>
+    <svg className='w-[18px] h-[18px]' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.6' strokeLinecap='round'>
+      <circle cx='12' cy='12' r='9.5' />
+      <path d='M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 17h.01' />
+    </svg>
+  </span>
+)
+
+// Input whose label sits inside as a placeholder and floats up once there is a value
+const FloatingField = ({ label, name, value, onChange, error, type = 'text', inputMode, autoComplete, children }) => (
+  <div>
+    <div className={`flex items-stretch rounded-md border bg-white ${error ? 'border-red-600 ring-1 ring-red-600' : 'border-gray-300 focus-within:border-gray-900 focus-within:ring-1 focus-within:ring-gray-900'}`}>
+      <div className='relative flex-1 min-w-0'>
+        <input
+          id={name}
+          name={name}
+          value={value}
+          onChange={onChange}
+          type={type}
+          inputMode={inputMode}
+          autoComplete={autoComplete}
+          placeholder=' '
+          aria-invalid={!!error}
+          aria-describedby={error ? `${name}-error` : undefined}
+          className='peer w-full bg-transparent rounded-md px-3.5 pt-5 pb-1.5 text-sm text-gray-900 outline-none'
+        />
+        <label
+          htmlFor={name}
+          className='pointer-events-none absolute left-3.5 top-1.5 translate-y-0 text-[11px] text-gray-500 transition-all peer-placeholder-shown:top-1/2 peer-placeholder-shown:-translate-y-1/2 peer-placeholder-shown:text-sm'
+        >{label}</label>
+      </div>
+      {children}
+    </div>
+    {error && <p id={`${name}-error`} className='text-xs text-red-600 mt-1.5'>{error}</p>}
+  </div>
+)
+
 // one bordered group of radio rows, like the shipping and payment boxes in the design
 const OptionGroup = ({ children }) => (
   <div className='border border-gray-300 rounded-md overflow-hidden divide-y divide-gray-300'>{children}</div>
@@ -46,14 +140,17 @@ const PlaceOrder = () => {
     city:'',
     zipcode:'',
     phone:'',
+    phoneCountry:'BD',
     ...savedAddress
   })
+  const [errors,setErrors] = useState({})
 
   const onChangeHandler = (event) => {
     const name = event.target.name
     const value = event.target.value
 
     setFormData(data => ({...data,[name]:value}) )
+    if (errors[name]) setErrors(prev => ({...prev,[name]:undefined}))
   }
 
   const formatPrice = (amount) => `${currency}${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -77,6 +174,14 @@ const PlaceOrder = () => {
   const onSubmitHandler = async (event) => {
     event.preventDefault()
 
+    const formErrors = validateCheckout(formData)
+    setErrors(formErrors)
+    const firstInvalid = Object.keys(formErrors).find(key => formErrors[key])
+    if (firstInvalid) {
+      document.getElementById(firstInvalid)?.focus()
+      return
+    }
+
     if (!token) {
       toast.error('Please sign in to place your order')
       navigate('/login')
@@ -99,7 +204,7 @@ const PlaceOrder = () => {
 
       // the server looks up prices and shipping fees itself; we only send what was chosen
       const orderData = {
-        address: formData,
+        address: { ...formData, email: formData.email.trim(), phone: formatPhone(formData.phone, formData.phoneCountry) },
         items: lines.map(line => ({ _id: line.product._id, size: line.size, quantity: line.quantity })),
         shippingMethod,
       }
@@ -191,7 +296,7 @@ const PlaceOrder = () => {
       <div className='grid lg:grid-cols-2'>
 
         {/* ------------- Left: checkout form ------------- */}
-        <form onSubmit={onSubmitHandler} className='px-4 sm:px-[5vw] lg:px-12 xl:px-16 py-8 lg:py-12 lg:border-r border-gray-200'>
+        <form noValidate onSubmit={onSubmitHandler} className='px-4 sm:px-[5vw] lg:px-12 xl:px-16 py-8 lg:py-12 lg:border-r border-gray-200'>
           <div className='w-full max-w-[520px] lg:ml-auto flex flex-col gap-8'>
 
             {/* Contact */}
@@ -200,7 +305,9 @@ const PlaceOrder = () => {
                 <h2 className='text-lg font-semibold'>Contact</h2>
                 {!token && <button type='button' onClick={()=>navigate('/login')} className='p-0 border-0 bg-transparent text-sm underline text-gray-700 hover:text-black'>Sign in</button>}
               </div>
-              <input required onChange={onChangeHandler} name='email' value={formData.email} className={inputClass} type='email' placeholder='Email' />
+              <FloatingField label='Email or mobile phone number' name='email' value={formData.email} onChange={onChangeHandler} error={errors.email} inputMode='email' autoComplete='email'>
+                <HelpIcon text='In case we need to contact you about your order' />
+              </FloatingField>
             </section>
 
             {/* Delivery */}
@@ -212,16 +319,32 @@ const PlaceOrder = () => {
                   <option value='Bangladesh'>Bangladesh</option>
                 </select>
               </div>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                <input onChange={onChangeHandler} name='firstName' value={formData.firstName} className={inputClass} type='text' placeholder='First name (optional)' />
-                <input required onChange={onChangeHandler} name='lastName' value={formData.lastName} className={inputClass} type='text' placeholder='Last name' />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 items-start'>
+                <FloatingField label='First name (optional)' name='firstName' value={formData.firstName} onChange={onChangeHandler} autoComplete='given-name' />
+                <FloatingField label='Last name' name='lastName' value={formData.lastName} onChange={onChangeHandler} error={errors.lastName} autoComplete='family-name' />
               </div>
-              <input required onChange={onChangeHandler} name='street' value={formData.street} className={inputClass} type='text' placeholder='Address' />
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                <input required onChange={onChangeHandler} name='city' value={formData.city} className={inputClass} type='text' placeholder='City' />
-                <input onChange={onChangeHandler} name='zipcode' value={formData.zipcode} className={inputClass} type='text' inputMode='numeric' placeholder='Postal code (optional)' />
+              <FloatingField label='Address' name='street' value={formData.street} onChange={onChangeHandler} error={errors.street} autoComplete='street-address' />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 items-start'>
+                <FloatingField label='City' name='city' value={formData.city} onChange={onChangeHandler} error={errors.city} autoComplete='address-level2' />
+                <FloatingField label='Postal code (optional)' name='zipcode' value={formData.zipcode} onChange={onChangeHandler} inputMode='numeric' autoComplete='postal-code' />
               </div>
-              <input required onChange={onChangeHandler} name='phone' value={formData.phone} className={inputClass} type='tel' placeholder='Phone' />
+              <FloatingField label='Phone' name='phone' value={formData.phone} onChange={onChangeHandler} error={errors.phone} type='tel' inputMode='tel' autoComplete='tel-national'>
+                <HelpIcon text='In case we need to contact you about your order' />
+                {/* Country calling code: a transparent native select over a short "+880" label */}
+                <div className='relative flex items-center gap-1 px-3 bg-gray-100 border-l border-gray-300 rounded-r-md text-sm text-gray-800'>
+                  <span>+{phoneCountries.find(item => item.code === formData.phoneCountry)?.dial}</span>
+                  <img src={assets.dropdown_icon} className='h-2.5 rotate-90 opacity-60' alt='' />
+                  <select
+                    name='phoneCountry'
+                    value={formData.phoneCountry}
+                    onChange={onChangeHandler}
+                    aria-label='Country calling code'
+                    className='absolute inset-0 opacity-0 cursor-pointer'
+                  >
+                    {phoneCountries.map(item => <option key={item.code} value={item.code}>{item.name} (+{item.dial})</option>)}
+                  </select>
+                </div>
+              </FloatingField>
               <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
                 <input type='checkbox' checked={saveInfo} onChange={()=>setSaveInfo(!saveInfo)} className='w-4 h-4 accent-gray-900' />
                 Save this information for next time
