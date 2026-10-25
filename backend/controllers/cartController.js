@@ -43,6 +43,10 @@ const updateCart = async (req,res) => {
         const userData = await userModel.findById(userId)
         let cartData = await userData.cartData;
 
+        // the item may not be in the saved cart yet (e.g. merging a guest cart after sign-in)
+        if (!cartData[itemId]) {
+            cartData[itemId] = {}
+        }
         cartData[itemId][size] = quantity
         
         await userModel.findByIdAndUpdate(userId, {cartData})
