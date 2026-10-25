@@ -68,8 +68,8 @@ const Orders = ({token}) => {
                     </div>
                     <p className='mt-3 mb-2 font-medium'>{order.address.firstName + " " + order.address.lastName}</p>
                     <div>
-                      <p>{order.address.state + ","}</p>
-                      <p>{order.address.city + ", " + order.address.city + ", " + order.address.zipcode + ", " + order.address.country}</p>
+                      <p>{order.address.street}</p>
+                      <p>{[order.address.city, order.address.zipcode, order.address.country].filter(Boolean).join(", ")}</p>
                     </div>
                     <p>{order.address.phone}</p>
                   </div>
@@ -77,6 +77,7 @@ const Orders = ({token}) => {
                     <p className='text-sm sm:text-[15px]'>Items : {order.items.length}</p>
                     <p className='mt-3'>Method : {order.paymentMethod}</p>
                     <p>Payment : { order.payment ? 'Done' : 'Pending'}</p>
+                    {order.shipping && <p>Shipping : {order.shipping.label} ({currency}{order.shipping.fee})</p>}
                     <p>Date : {new Date(order.date).toLocaleDateString()}</p>
                   </div>
                   <p className='text-sm sm:text-[15px]'>{currency}{order.amount}</p>
