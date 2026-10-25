@@ -4,6 +4,11 @@ import { assets } from '../assets/assets'
 
 const slides = assets.hero_slides
 
+// The slider keeps the old hero's footprint: one 1259x1008 image on mobile,
+// and that image beside the text column (2518x1008) from sm up. The 16:9
+// slides are cropped to fit, so each one sets where to anchor the crop.
+const slidePositions = ['object-center', 'object-[75%_0%]', 'object-[75%_0%]', 'object-center']
+
 const Hero = () => {
 
     const trackRef = useRef(null)
@@ -17,12 +22,30 @@ const Hero = () => {
         track.scrollTo({ left: next * track.clientWidth, behavior: 'smooth' })
     }
 
+    const currentRef = useRef(0)
+    currentRef.current = current
+    const widthRef = useRef(0)
+
     // keep the dots in sync when the user swipes or scrolls by hand
     const onScroll = () => {
         const track = trackRef.current
         if (!track) return
+        // scrolls caused by a resize are not user navigation; the observer below re-aligns those
+        if (track.clientWidth !== widthRef.current) return
         setCurrent(Math.round(track.scrollLeft / track.clientWidth))
     }
+
+    // slide width changes with the window, so re-align to the current slide
+    useEffect(()=>{
+        const track = trackRef.current
+        if (!track) return
+        const observer = new ResizeObserver(()=>{
+            widthRef.current = track.clientWidth
+            track.scrollTo({ left: currentRef.current * track.clientWidth })
+        })
+        observer.observe(track)
+        return () => observer.disconnect()
+    },[])
 
     // auto-advance every 5 seconds, paused while hovering or touching
     useEffect(()=>{
@@ -48,7 +71,7 @@ const Hero = () => {
         {
           slides.map((image,index)=>(
             <Link key={index} to='/collection' className='w-full flex-shrink-0 snap-start'>
-              <img className='w-full aspect-[16/9] object-cover' src={image} alt={`Collection slide ${index + 1}`} />
+              <img className={`w-full aspect-[1259/1008] sm:aspect-[2518/1008] object-cover ${slidePositions[index]}`} src={image} alt={`Collection slide ${index + 1}`} />
             </Link>
           ))
         }
