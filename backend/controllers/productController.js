@@ -74,6 +74,48 @@ const removeProduct = async (req, res) => {
     }
 }
 
+//function for editing a product
+// Text fields are optional: only the ones sent are changed. A file in
+// image1..image4 replaces the image in that slot; other slots keep theirs.
+const updateProduct = async (req, res) => {
+    try {
+
+        const { id, name, description, price, category, subCategory, sizes, bestseller } = req.body
+
+        const product = await productModel.findById(id)
+        if (!product) {
+            return res.json({ success: false, message: "Product not found" })
+        }
+
+        if (name !== undefined) product.name = name
+        if (description !== undefined) product.description = description
+        if (price !== undefined) product.price = Number(price)
+        if (category !== undefined) product.category = category
+        if (subCategory !== undefined) product.subCategory = subCategory
+        if (sizes !== undefined) product.sizes = JSON.parse(sizes)
+        if (bestseller !== undefined) product.bestseller = bestseller === "true"
+
+        const images = [...product.image]
+        const slots = ['image1', 'image2', 'image3', 'image4']
+        await Promise.all(slots.map(async (slot, index) => {
+            const file = req.files?.[slot]?.[0]
+            if (file) {
+                const result = await cloudinary.uploader.upload(file.path, { resource_type: 'image' })
+                images[index] = result.secure_url
+            }
+        }))
+        product.image = images.filter(Boolean)
+
+        await product.save()
+
+        res.json({ success: true, message: "Product Updated", product })
+
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
 //fuction for single product
 const singleProduct = async (req, res) => {
     try {
@@ -88,4 +130,4 @@ const singleProduct = async (req, res) => {
     }
 }
 
-export { listProducts, addProduct, removeProduct, singleProduct };
+export { listProducts, addProduct, removeProduct, singleProduct, updateProduct };
