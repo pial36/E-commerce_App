@@ -172,7 +172,7 @@ const Login = () => {
             {currentstate === 'Sign Up' && <input onChange={(e)=>setName(e.target.value)} value={name} type="text" autoComplete='name' className={inputClass} placeholder='Name' required/>}
             <input onChange={(e)=>setEmail(e.target.value)} value={email} type="email" autoComplete='email' className={inputClass} placeholder='Email' required/>
             <input onChange={(e)=>setPassword(e.target.value)} value={password} type="password" autoComplete={currentstate === 'Sign Up' ? 'new-password' : 'current-password'} className={inputClass} placeholder='Password' required/>
-            {currentstate === 'Sign Up' && <p className='w-full text-xs text-gray-500 -mt-2'>Use a real email address. We'll send a code to confirm it, and it's where password resets go.</p>}
+            {currentstate === 'Sign Up' /* && <p className='w-full text-xs text-gray-500 -mt-2'>Use a real email address. We'll send a code to confirm it, and it's where password resets go.</p> */}
             <div className='w-full flex justify-between text-sm mt-[-8px]'>
                 <button type='button' onClick={()=>goTo('Forgot')} className={linkClass}>Forgot Your Password?</button>
                 {
