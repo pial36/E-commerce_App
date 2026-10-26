@@ -3,11 +3,13 @@ import React, { useEffect, useState } from 'react'
 import { backendUrl, currency } from '../App'
 import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
+import EditProductModal from '../components/EditProductModal'
 
 const List = ({token}) => {
 
 
   const [list,setList] = useState([])
+  const [editing,setEditing] = useState(null)
 
   const fetchList = async () => {
     try {
@@ -28,7 +30,9 @@ const List = ({token}) => {
     }
   }
 
-  const removeProduct = async (id) =>{
+  const removeProduct = async (item) =>{
+    if (!window.confirm(`Delete "${item.name}"? This cannot be undone.`)) return
+    const id = item._id
     try {
       const response = await axios.post(backendUrl + '/api/product/remove', {id} , {headers:{token}})
 
@@ -71,14 +75,27 @@ const List = ({token}) => {
                 <p>{item.name}</p>
                 <p>{item.category}</p>
                 <p>{currency}{item.price}</p>
-                <div className='flex justify-center items-center'>
-                  <img onClick={()=>removeProduct(item._id)} className='w-7 h-7 sm:w-6 sm:h-6 md:w-7 md:h-7 cursor-pointer' src={assets.remove_icon} alt="Remove Icon" />
+                <div className='flex justify-center items-center gap-3'>
+                  <button onClick={()=>setEditing(item)} aria-label={`Edit ${item.name}`} title='Edit' className='w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-200'>
+                    <svg className='w-[18px] h-[18px]' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'><path d='M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/></svg>
+                  </button>
+                  <img onClick={()=>removeProduct(item)} title='Delete' className='w-7 h-7 sm:w-6 sm:h-6 md:w-7 md:h-7 cursor-pointer' src={assets.remove_icon} alt="Delete" />
                 </div>
                 {/* <p onClick={()=>removeProduct(item._id)} className='text- right md:text-center cursor-pointer text-lg'>X</p> */}
             </div>
           ))
         }
       </div>
+
+      {
+        editing &&
+        <EditProductModal
+          product={editing}
+          token={token}
+          onClose={()=>setEditing(null)}
+          onSaved={async ()=>{ setEditing(null); await fetchList() }}
+        />
+      }
     </>
   )
 }

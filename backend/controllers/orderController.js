@@ -273,6 +273,23 @@ const userOrders = async (req,res) => {
 
 }
 
+// Delete an order from admin panel
+const deleteOrder = async (req,res) => {
+    try {
+        const { orderId } = req.body
+
+        const deleted = await orderModel.findByIdAndDelete(orderId)
+        if (!deleted) {
+            return res.json({success: false, message: 'Order not found'})
+        }
+        res.json({success: true, message: 'Order Deleted'})
+
+    } catch (error) {
+        console.log(error)
+        res.json({success:false,message:error.message})
+    }
+}
+
 // Update order status from admin panel
 const updateStatus = async (req,res) => {
     try {
@@ -288,4 +305,4 @@ const updateStatus = async (req,res) => {
 }
 
 
-export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus, verifyStripe }
+export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus, verifyStripe, deleteOrder }
