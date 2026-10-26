@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
 import { refreshSession, setSignedOutHandler } from "../authClient";
+import { makeCartKey } from "../cartKey";
 
 export const ShopContext = createContext();
 
@@ -41,11 +42,14 @@ const readGuestCart = () => {
     const navigate = useNavigate();
 
 
-    const addToCart = async (itemId,size) => {
-        if (!size) {
+    // imageIndex: which of the product's photos the customer picked
+    const addToCart = async (itemId,chosenSize,imageIndex = 0) => {
+        if (!chosenSize) {
             toast.error('Select Product Size');
             return;
         }
+        // the cart line key carries the size and the picked image
+        const size = makeCartKey(chosenSize, imageIndex);
         let cartData = structuredClone(cartItems);
 
         if (cartData[itemId]) {

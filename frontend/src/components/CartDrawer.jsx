@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
+import { parseCartKey, lineImage } from '../cartKey'
 
 const HomeIcon = ({ className }) => (
   <svg className={className} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
@@ -29,14 +30,14 @@ const CartDrawer = () => {
 
   const formatPrice = (amount) => `${currency} ${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
-  // flatten { productId: { size: qty } } into rows the drawer can render
+  // flatten { productId: { size[::imageIndex]: qty } } into rows the drawer can render
   const lines = []
   for (const productId in cartItems) {
     const product = products.find((item) => item._id === productId)
     if (!product) continue
-    for (const size in cartItems[productId]) {
-      if (cartItems[productId][size] > 0) {
-        lines.push({ product, size, quantity: cartItems[productId][size] })
+    for (const key in cartItems[productId]) {
+      if (cartItems[productId][key] > 0) {
+        lines.push({ product, key, ...parseCartKey(key), quantity: cartItems[productId][key] })
       }
     }
   }
@@ -102,8 +103,8 @@ const CartDrawer = () => {
             : <div className='divide-y divide-gray-100'>
                 {
                   lines.map((line)=>(
-                    <div key={line.product._id + line.size} className='flex gap-4 px-5 sm:px-6 py-5'>
-                      <img onClick={()=>goTo(`/product/${line.product._id}`)} src={line.product.image[0]} className='w-24 h-28 object-cover bg-gray-50 cursor-pointer' alt={line.product.name} />
+                    <div key={line.product._id + line.key} className='flex gap-4 px-5 sm:px-6 py-5'>
+                      <img onClick={()=>goTo(`/product/${line.product._id}`)} src={lineImage(line.product, line.imageIndex)} className='w-24 h-28 object-cover bg-gray-50 cursor-pointer' alt={line.product.name} />
                       <div className='flex-1 min-w-0'>
                         <p onClick={()=>goTo(`/product/${line.product._id}`)} className='text-sm font-medium truncate cursor-pointer hover:underline'>{line.product.name}</p>
                         <p className='text-xs text-gray-500 mt-1'>Size: {line.size}</p>
@@ -113,7 +114,7 @@ const CartDrawer = () => {
                           {/* Quantity stepper: minus turns into a bin at 1 */}
                           <div className='flex items-center border border-gray-800 h-9'>
                             <button
-                              onClick={()=>updateQuantity(line.product._id, line.size, line.quantity - 1)}
+                              onClick={()=>updateQuantity(line.product._id, line.key, line.quantity - 1)}
                               aria-label={line.quantity === 1 ? 'Remove item' : 'Decrease quantity'}
                               className='p-0 border-0 bg-transparent w-9 h-full flex items-center justify-center text-gray-800 hover:bg-gray-100'
                             >
@@ -121,13 +122,13 @@ const CartDrawer = () => {
                             </button>
                             <span className='w-8 text-center text-sm'>{line.quantity}</span>
                             <button
-                              onClick={()=>updateQuantity(line.product._id, line.size, line.quantity + 1)}
+                              onClick={()=>updateQuantity(line.product._id, line.key, line.quantity + 1)}
                               aria-label='Increase quantity'
                               className='p-0 border-0 bg-transparent w-9 h-full flex items-center justify-center text-gray-800 text-lg leading-none hover:bg-gray-100'
                             >+</button>
                           </div>
                           <button
-                            onClick={()=>updateQuantity(line.product._id, line.size, 0)}
+                            onClick={()=>updateQuantity(line.product._id, line.key, 0)}
                             aria-label='Remove item'
                             className='p-0 border-0 bg-transparent text-gray-500 hover:text-black'
                           >
