@@ -38,7 +38,7 @@ Single private GitHub repo: `pial36/E-commerce_App`, branch `main`.
 
 ## Environment variables
 
-### backend (set in Hostinger → Environment variables, 8 keys)
+### backend (set in Hostinger → Environment variables, 13 keys)
 ```
 MONGODB_URL
 CLOUDINARY_API_KEY
@@ -48,7 +48,14 @@ JWT_SECRET
 ADMIN_EMAIL
 ADMIN_PASSWORD
 STRIPE_SECRET_KEY
+SMTP_HOST        # smtp.hostinger.com
+SMTP_PORT        # 465
+SMTP_USER        # no-reply@velariqfashion.com (Hostinger mailbox)
+SMTP_PASS        # that mailbox password
+MAIL_FROM        # optional, e.g. Velariq Fashion <no-reply@velariqfashion.com>
 ```
+The SMTP_* keys send sign-up verification and password-reset codes. Without them
+sign-up fails with "Email service is not configured" and no account is created.
 Do NOT set `PORT` — Hostinger assigns it; `server.js` reads `process.env.PORT || 4000`.
 
 ### frontend and admin
