@@ -273,6 +273,29 @@ const userOrders = async (req,res) => {
 
 }
 
+// New orders since a timestamp, for the admin notification bell.
+// Returns a small summary of the latest 20 plus the total count.
+const recentOrders = async (req,res) => {
+    try {
+        const since = Number(req.body.since) || 0
+        const filter = { date: { $gt: since } }
+
+        const [count, orders] = await Promise.all([
+            orderModel.countDocuments(filter),
+            orderModel.find(filter)
+                .sort({ date: -1 })
+                .limit(20)
+                .select('address.firstName address.lastName amount date paymentMethod items.quantity')
+        ])
+
+        res.json({ success: true, count, orders })
+
+    } catch (error) {
+        console.log(error)
+        res.json({ success: false, message: error.message })
+    }
+}
+
 // Delete an order from admin panel
 const deleteOrder = async (req,res) => {
     try {
@@ -305,4 +328,4 @@ const updateStatus = async (req,res) => {
 }
 
 
-export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus, verifyStripe, deleteOrder }
+export { placeOrder, placeOrderStripe, placeOrderRazorpay, allOrders, userOrders, updateStatus, verifyStripe, deleteOrder, recentOrders }
