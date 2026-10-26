@@ -5,6 +5,8 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const SAVED_ADDRESS_KEY = 'checkoutAddress'
+// a guest's card order needs its key to be confirmed after Stripe sends them back
+export const GUEST_ORDER_KEY_PREFIX = 'guestOrderKey:'
 
 const inputClass = 'w-full border border-gray-300 rounded-md px-3.5 py-3 text-sm placeholder:text-gray-500 focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900'
 
@@ -125,6 +127,8 @@ const PlaceOrder = () => {
   const [shippingMethod,setShippingMethod] = useState('inside_dhaka');
   const [showSummary,setShowSummary] = useState(false);
   const [submitting,setSubmitting] = useState(false);
+  // set after a guest's cash-on-delivery order, to show the confirmation
+  const [placedOrder,setPlacedOrder] = useState(null);
 
   const savedAddress = (() => {
     try { return JSON.parse(localStorage.getItem(SAVED_ADDRESS_KEY)) } catch { return null }
@@ -182,12 +186,6 @@ const PlaceOrder = () => {
       return
     }
 
-    if (!isLoggedIn) {
-      toast.error('Please sign in to place your order')
-      navigate('/login')
-      return
-    }
-
     if (lines.length === 0) {
       toast.error('Your cart is empty')
       return
@@ -207,6 +205,8 @@ const PlaceOrder = () => {
         address: { ...formData, email: formData.email.trim(), phone: formatPhone(formData.phone, formData.phoneCountry) },
         items: lines.map(line => ({ _id: line.product._id, size: line.size, quantity: line.quantity })),
         shippingMethod,
+        // tells the API this is a guest order rather than an expired session
+        asGuest: !isLoggedIn,
       }
 
       switch (method) {
@@ -214,7 +214,12 @@ const PlaceOrder = () => {
           const response = await axios.post(backendUrl + '/api/order/place',orderData)
           if (response.data.success) {
             setCartItems({})
-            navigate('/orders')
+            if (isLoggedIn) {
+              navigate('/orders')
+            } else {
+              setPlacedOrder({ id: response.data.orderId, amount: response.data.amount, contact: formData.email.trim() })
+              window.scrollTo(0, 0)
+            }
           } else {
             toast.error(response.data.message)
           }
@@ -224,6 +229,9 @@ const PlaceOrder = () => {
         case 'stripe': {
           const responseStripe = await axios.post(backendUrl + '/api/order/stripe',orderData)
           if (responseStripe.data.success) {
+            if (responseStripe.data.guestKey) {
+              localStorage.setItem(GUEST_ORDER_KEY_PREFIX + responseStripe.data.orderId, responseStripe.data.guestKey)
+            }
             window.location.replace(responseStripe.data.session_url)
           } else {
             toast.error(responseStripe.data.message)
@@ -278,6 +286,29 @@ const PlaceOrder = () => {
     </div>
   )
 
+  if (placedOrder) {
+    return (
+      <div className='border-t border-gray-200 py-16 sm:py-24 flex justify-center'>
+        <div className='w-full max-w-md text-center flex flex-col items-center gap-4 text-gray-800'>
+          <span className='w-14 h-14 rounded-full bg-green-50 text-green-600 flex items-center justify-center'>
+            <svg className='w-7 h-7' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'><path d='M5 12.5 10 17 19 7.5'/></svg>
+          </span>
+          <h1 className='prata-regular text-3xl'>Thank you!</h1>
+          <p className='text-gray-600'>Your order has been placed.</p>
+          <div className='w-full border border-gray-200 rounded-md divide-y divide-gray-200 text-sm text-left'>
+            <div className='flex justify-between px-4 py-3'><span className='text-gray-500'>Order number</span><span className='font-medium'>#{String(placedOrder.id).slice(-8).toUpperCase()}</span></div>
+            <div className='flex justify-between px-4 py-3'><span className='text-gray-500'>Total (cash on delivery)</span><span className='font-medium'>{formatPrice(placedOrder.amount)}</span></div>
+          </div>
+          <p className='text-sm text-gray-500'>We'll contact you at <b className='text-gray-800'>{placedOrder.contact}</b> to confirm delivery. Keep your order number for any questions.</p>
+          <div className='flex flex-col sm:flex-row gap-3 mt-2'>
+            <button onClick={()=>navigate('/collection')} className='border-0 bg-gray-900 hover:bg-black text-white text-sm px-6 py-3 rounded-md'>Continue shopping</button>
+            <button onClick={()=>navigate('/login')} className='border border-gray-300 bg-white text-gray-800 text-sm px-6 py-3 rounded-md hover:border-gray-900'>Create an account</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='-mx-4 sm:-mx-[5vw] md:-mx-[7vw] lg:-mx-[9vw] border-t border-gray-200 text-gray-900'>
 
@@ -305,6 +336,7 @@ const PlaceOrder = () => {
                 <h2 className='text-lg font-semibold'>Contact</h2>
                 {!isLoggedIn && <button type='button' onClick={()=>navigate('/login')} className='p-0 border-0 bg-transparent text-sm underline text-gray-700 hover:text-black'>Sign in</button>}
               </div>
+              {!isLoggedIn && <p className='-mt-1 text-xs text-gray-500'>Checking out as a guest. No account needed — or sign in to see this order in your account.</p>}
               <FloatingField label='Email or mobile phone number' name='email' value={formData.email} onChange={onChangeHandler} error={errors.email} inputMode='email' autoComplete='email'>
                 <HelpIcon text='In case we need to contact you about your order' />
               </FloatingField>

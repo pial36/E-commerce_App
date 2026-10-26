@@ -68,6 +68,7 @@ const Orders = () => {
         'Order ID': order._id,
         'Date': new Date(order.date).toLocaleString(),
         'Customer': [order.address.firstName, order.address.lastName].filter(Boolean).join(' '),
+        'Customer type': order.guest ? 'Guest' : 'Account',
         'Email / Contact': order.address.email || '',
         'Phone': order.address.phone || '',
         'Address': order.address.street || '',
@@ -125,12 +126,16 @@ const Orders = () => {
                         }
                       })}
                     </div>
-                    <p className='mt-3 mb-2 font-medium'>{order.address.firstName + " " + order.address.lastName}</p>
+                    <p className='mt-3 mb-2 font-medium flex items-center gap-2'>
+                      {[order.address.firstName, order.address.lastName].filter(Boolean).join(" ")}
+                      {order.guest && <span className='px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold tracking-wide'>GUEST</span>}
+                    </p>
                     <div>
                       <p>{order.address.street}</p>
                       <p>{[order.address.city, order.address.zipcode, order.address.country].filter(Boolean).join(", ")}</p>
                     </div>
                     <p>{order.address.phone}</p>
+                    {order.address.email && <p className='text-gray-500'>{order.address.email}</p>}
                   </div>
                   <div>
                     <p className='text-sm sm:text-[15px]'>Items : {order.items.length}</p>

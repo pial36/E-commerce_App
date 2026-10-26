@@ -10,6 +10,9 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: { type: String, required: true },
     payment: { type: Boolean, required: true, default: false },
     stripeSessionId: { type: String },
+    // placed without an account; guestKeyHash lets that browser confirm a card payment
+    guest: { type: Boolean, default: false },
+    guestKeyHash: { type: String },
     date: { type: Number, required: true },
 
 })
