@@ -20,8 +20,16 @@ a.active hr{
     font-style: normal;
   }
 
-  ::-webkit-scrollbar{
+  /* hide scrollbars only on inner scrollers (slider, thumbnails), not the page */
+  .no-scrollbar{
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar{
     display: none;
+  }
+
+  [data-theme="dark"] .nav-icon{
+    filter: invert(1);
   }
 
   @media (max-width:640px) {

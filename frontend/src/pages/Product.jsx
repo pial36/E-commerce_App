@@ -36,7 +36,7 @@ const Product = () => {
 
           {/* -----Product Images------- */}
           <div className='flex-1 flex flex-col-reverse gap-3 sm:flex-row '>
-              <div className='flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
+              <div className='no-scrollbar flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
                   {
                     productData.image.map((item,index)=>(
                       <img onClick={()=>setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
@@ -72,7 +72,7 @@ const Product = () => {
                   </div>
 
                 </div>
-                <button onClick={()=>addToCart(productData._id,size)} className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CARD</button>
+                <button onClick={()=>addToCart(productData._id,size)} className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CART</button>
                 <hr className='mt-8 sm:w-4/5' />
                 <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
                       <p>100% Original Product.</p>

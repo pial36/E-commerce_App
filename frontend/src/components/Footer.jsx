@@ -26,7 +26,7 @@ const Footer = () => {
             <p className='text-xl font-medium mb-5'>GET IN TOUCH</p>
             <ul className='flex flex-col gap-1 text-gray-600'>
                 <li>+88016-4831-9372</li>
-                <li>contact@forever.com</li>
+                <li>contact@velariqfashion.com</li>
             </ul>
         </div>
 
@@ -34,7 +34,7 @@ const Footer = () => {
 
         <div>
             <hr />
-            <p className='py-5 text-sm text-center'>copyrigt 2024@ forever.com - All Right Reserved.</p>
+            <p className='py-5 text-sm text-center'>Copyright © {new Date().getFullYear()} Velariq Fashion - All Rights Reserved.</p>
         </div>
 
     </div>

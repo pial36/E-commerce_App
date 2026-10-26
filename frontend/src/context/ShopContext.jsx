@@ -5,16 +5,35 @@ import axios from 'axios'
 
 export const ShopContext = createContext();
 
+// Guests have no server cart, so their cart is kept in localStorage to survive a refresh.
+// Signed-in carts live on the server; on sign-in the guest cart is merged into it.
+const GUEST_CART_KEY = 'guestCart'
+
+const readGuestCart = () => {
+    try {
+        return JSON.parse(localStorage.getItem(GUEST_CART_KEY)) || {}
+    } catch {
+        return {}
+    }
+}
+
  export const ShopContextProvider = (props) => {
 
     const currency ='৳';
-    const delivery_fee = 10;
+    // must match shippingRates in backend/controllers/orderController.js
+    const shippingRates = {
+        inside_dhaka: { label: 'Inside Dhaka', fee: 100 },
+        outside_dhaka: { label: 'Outside Dhaka', fee: 150 },
+    };
+    const delivery_fee = shippingRates.inside_dhaka.fee;
     const backendUrl = import.meta.env.VITE_BACKEND_URL
     const [search,setSearch] = useState('');
     const [showSearch,setShowSearch] = useState(false);
-    const [cartItems,setCartItems] = useState({});
+    const [cartItems,setCartItems] = useState(() => localStorage.getItem('token') ? {} : readGuestCart());
     const [products,setProducts] = useState([]);
     const [token,setToken] = useState('');
+    const [cartOpen,setCartOpen] = useState(false);
+    const [lastAddedId,setLastAddedId] = useState(null);
     const navigate = useNavigate();
 
 
@@ -38,6 +57,8 @@ export const ShopContext = createContext();
             cartData[itemId][size] = 1;
         }
         setCartItems(cartData);
+        setLastAddedId(itemId);
+        setCartOpen(true);
 
         if (token) {
             try {
@@ -129,8 +150,23 @@ export const ShopContext = createContext();
             
             const response = await axios.post(backendUrl + '/api/cart/get',{},{headers:{token}})
             if(response.data.success){
-                setCartItems(response.data.cartData)
-                
+                const cartData = structuredClone(response.data.cartData || {})
+
+                // move anything added while signed out into the account cart
+                const guestCart = readGuestCart()
+                for (const itemId in guestCart) {
+                    for (const size in guestCart[itemId]) {
+                        const guestQuantity = guestCart[itemId][size]
+                        if (guestQuantity > 0) {
+                            const quantity = (cartData[itemId]?.[size] || 0) + guestQuantity
+                            cartData[itemId] = { ...cartData[itemId], [size]: quantity }
+                            await axios.post(backendUrl + '/api/cart/update', {itemId,size,quantity}, {headers:{token}})
+                        }
+                    }
+                }
+                localStorage.removeItem(GUEST_CART_KEY)
+
+                setCartItems(cartData)
             }
         } catch (error) {
             console.log(error);
@@ -149,6 +185,13 @@ export const ShopContext = createContext();
         }
     }, []);  // This effect runs only once on component mount
     
+    // keep the guest cart in localStorage (signed-in carts are saved on the server)
+    useEffect(() => {
+        if (!localStorage.getItem('token')) {
+            localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cartItems))
+        }
+    }, [cartItems, token]);
+
     // Fetch cart data whenever the token changes
     useEffect(() => {
         if (token) {
@@ -158,12 +201,13 @@ export const ShopContext = createContext();
     
 
     const value = {
-        products ,currency, delivery_fee,
+        products ,currency, delivery_fee, shippingRates,
         search,setSearch,showSearch,setShowSearch,
         cartItems,setCartItems,addToCart,
         getCartCount,updateQuantity,
         getCartAmount, navigate, backendUrl,
-        setToken,token
+        setToken,token,
+        cartOpen,setCartOpen,lastAddedId
     }
 
     return (
