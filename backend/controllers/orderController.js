@@ -249,7 +249,8 @@ const allOrders = async (req,res) => {
 
     try {
         
-        const orders = await orderModel.find({}) 
+        // newest first so the admin sees recent orders at the top
+        const orders = await orderModel.find({}).sort({ date: -1 })
         res.json({success:true,orders})
     } catch (error) {
         console.log(error);
