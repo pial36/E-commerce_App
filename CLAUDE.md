@@ -65,16 +65,36 @@ VITE_BACKEND_URL = https://api.velariqfashion.com
 Vite inlines this at BUILD time. Changing it requires a rebuild, not just a restart.
 Local `.env` files still point to `http://localhost:4000` — that is intentional for dev.
 
-## Key backend details (`backend/server.js`)
+## Key backend details (`backend/app.js` + `backend/server.js`)
 - ES modules (`import` syntax, `"type": "module"`)
-- Entry file: `server.js`, start script: `node server.js`
-- Routes mounted at: `/api/user`, `/api/product`, `/api/cart`, `/api/order`
+- Entry file: `server.js` (connects MongoDB/Cloudinary and listens), start script: `node server.js`.
+  The Express app itself (middleware + routes) is built in `app.js`.
+- Routes mounted at: `/api/auth`, `/api/user`, `/api/product`, `/api/cart`, `/api/order`
 - Health check: `GET /` returns "API Working"
-- Config files: `config/mongodb.js`, `config/cloudinary.js`
-- CORS is configured with an explicit origin allowlist:
+- Config files: `config/mongobdb.js`, `config/cloudinary.js`, `config/mailer.js`
+- CORS (in `app.js`) uses an explicit origin allowlist with `credentials: true`:
   `https://velariqfashion.com`, `https://www.velariqfashion.com`,
-  `https://admin.velariqfashion.com`, `http://localhost:5173`, `http://localhost:5174`
+  `https://admin.velariqfashion.com`, `http://localhost:5173`, `http://localhost:5174`,
+  plus any comma-separated origins in the optional `ALLOWED_ORIGINS` env var.
+  Non-GET requests whose `Origin` isn't on the list get 403 (CSRF protection).
   **If a new domain or port is added, it must be added here or requests will be blocked.**
+
+## Authentication (JWT access + refresh tokens in httpOnly cookies)
+- No tokens in `localStorage` or headers; the browser sends cookies (`axios.defaults.withCredentials = true`).
+- Customer cookies `vf_at` / `vf_rt`; admin cookies `vf_admin_at` / `vf_admin_rt` (separate names because
+  store and admin call the same API host). All `HttpOnly`, `SameSite=Lax`, `Secure` over https.
+- Access token: JWT `{ sub, role, type:'access' }`, 15 min, path `/`. Checked by `middleware/auth.js`
+  and `middleware/adminAuth.js`, which answer **401** when it's missing/expired.
+- Refresh token: random string, path `/api/auth`, stored hashed in the `refreshtokens` collection
+  (`models/refreshTokenModel.js`, TTL index cleans up expired rows). Rotated on every refresh; reuse of an
+  already-rotated token after a 30 s grace window revokes all of that account's sessions.
+  Customers: 30 days, sliding. Admin: 1 day from sign-in, not extended.
+- Endpoints: `POST /api/auth/refresh`, `/api/auth/logout`, `/api/auth/admin/refresh`, `/api/auth/admin/logout`.
+  Logic lives in `utils/authSession.js`.
+- Frontends: `frontend/src/authClient.js` and `admin/src/session.js` call refresh on page load (to learn
+  whether someone is signed in) and retry a request once after a 401 via an axios interceptor.
+- Password reset revokes every session for that account. Admin panel also signs out after 30 min idle.
+- `app.set('trust proxy', 1)` is required so `req.secure` is true behind Hostinger's HTTPS proxy.
 - `backend/vercel.json` is leftover from an old Vercel deployment and is unused.
 
 ## Known issues / gotchas

@@ -4,7 +4,7 @@ import OrderNotifications from './OrderNotifications'
 
 const STORE_URL = 'https://velariqfashion.com'
 
-const Navbar = ({token, setToken}) => {
+const Navbar = ({onLogout}) => {
   return (
     <header className='sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-200'>
       <div className='flex items-center justify-between h-16 sm:h-20 px-[4%]'>
@@ -27,9 +27,9 @@ const Navbar = ({token, setToken}) => {
             View store
             <svg className='w-3.5 h-3.5' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'><path d='M7 17 17 7M8 7h9v9'/></svg>
           </a>
-          <OrderNotifications token={token} />
+          <OrderNotifications />
           <button
-            onClick={()=>setToken('')}
+            onClick={onLogout}
             className='flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-900 hover:text-white hover:border-gray-900 transition-colors'
           >
             <svg className='w-4 h-4' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'><path d='M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9'/></svg>

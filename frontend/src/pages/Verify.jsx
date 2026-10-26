@@ -7,7 +7,7 @@ import axios from 'axios'
 
 const Verify = () => {
 
-    const { navigate, token, setCartItems, backendUrl } = useContext(ShopContext)
+    const { navigate, isLoggedIn, setCartItems, backendUrl } = useContext(ShopContext)
     const [searchParams,setSearchParams] = useSearchParams()
 
     const success = searchParams.get('success')
@@ -16,11 +16,11 @@ const Verify = () => {
     const verifyPayment = async () => {
         try {
 
-            if (!token) {
+            if (!isLoggedIn) {
                 return null
             }
 
-            const response = await axios.post(backendUrl + '/api/order/verifyStripe', {success,orderId},{headers:{token}})
+            const response = await axios.post(backendUrl + '/api/order/verifyStripe', {success,orderId})
             if (response.data.success) {
                 setCartItems({})
                 navigate('/orders')
@@ -37,7 +37,7 @@ const Verify = () => {
 
     useEffect(() => {
         verifyPayment()
-    },[token])
+    },[isLoggedIn])
   return (
     <div>
       

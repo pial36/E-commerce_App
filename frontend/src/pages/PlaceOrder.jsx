@@ -119,7 +119,7 @@ const OptionRow = ({ selected, onSelect, children, extra }) => (
 
 const PlaceOrder = () => {
 
-  const { navigate, backendUrl, token, cartItems, setCartItems, getCartAmount, products, currency, shippingRates } = useContext(ShopContext);
+  const { navigate, backendUrl, isLoggedIn, cartItems, setCartItems, getCartAmount, products, currency, shippingRates } = useContext(ShopContext);
 
   const [method,setMethod] = useState('cod');
   const [shippingMethod,setShippingMethod] = useState('inside_dhaka');
@@ -182,7 +182,7 @@ const PlaceOrder = () => {
       return
     }
 
-    if (!token) {
+    if (!isLoggedIn) {
       toast.error('Please sign in to place your order')
       navigate('/login')
       return
@@ -211,7 +211,7 @@ const PlaceOrder = () => {
 
       switch (method) {
         case 'cod': {
-          const response = await axios.post(backendUrl + '/api/order/place',orderData,{headers:{token}})
+          const response = await axios.post(backendUrl + '/api/order/place',orderData)
           if (response.data.success) {
             setCartItems({})
             navigate('/orders')
@@ -222,7 +222,7 @@ const PlaceOrder = () => {
         }
 
         case 'stripe': {
-          const responseStripe = await axios.post(backendUrl + '/api/order/stripe',orderData, {headers:{token}})
+          const responseStripe = await axios.post(backendUrl + '/api/order/stripe',orderData)
           if (responseStripe.data.success) {
             window.location.replace(responseStripe.data.session_url)
           } else {
@@ -303,7 +303,7 @@ const PlaceOrder = () => {
             <section className='flex flex-col gap-3'>
               <div className='flex items-baseline justify-between'>
                 <h2 className='text-lg font-semibold'>Contact</h2>
-                {!token && <button type='button' onClick={()=>navigate('/login')} className='p-0 border-0 bg-transparent text-sm underline text-gray-700 hover:text-black'>Sign in</button>}
+                {!isLoggedIn && <button type='button' onClick={()=>navigate('/login')} className='p-0 border-0 bg-transparent text-sm underline text-gray-700 hover:text-black'>Sign in</button>}
               </div>
               <FloatingField label='Email or mobile phone number' name='email' value={formData.email} onChange={onChangeHandler} error={errors.email} inputMode='email' autoComplete='email'>
                 <HelpIcon text='In case we need to contact you about your order' />

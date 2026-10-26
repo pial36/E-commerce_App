@@ -24,7 +24,7 @@ const linkClass = 'p-0 border-0 bg-transparent cursor-pointer text-sm text-gray-
 const Login = () => {
 
   const [currentstate, setCurrentState] = useState('Login');
-  const { token, setToken, navigate, backendUrl} = useContext(ShopContext);
+  const { isLoggedIn, setUser, navigate, backendUrl} = useContext(ShopContext);
 
   const [name,setName] = useState('')
   const [password,setPassword] = useState('')
@@ -41,9 +41,9 @@ const Login = () => {
     return () => clearTimeout(timer)
   },[resendIn])
 
-  const signIn = (newToken) => {
-    setToken(newToken)
-    localStorage.setItem('token',newToken)
+  // the API has set the session cookies; remember who is signed in
+  const signIn = (user) => {
+    setUser(user)
   }
 
   const goTo = (state) => {
@@ -78,14 +78,14 @@ const Login = () => {
           toast.info(`Please confirm your email. We sent a code to ${data.email}`)
           startVerification(data.email)
         } else {
-          signIn(data.token)
+          signIn(data.user)
         }
 
       } else if (currentstate === 'Verify') {
         const data = await post('/api/user/verify-email',{email,code})
         if (!data.success) return toast.error(data.message)
         toast.success('Email confirmed. Welcome to Velariq Fashion!')
-        signIn(data.token)
+        signIn(data.user)
 
       } else if (currentstate === 'Forgot') {
         const data = await post('/api/user/forgot-password',{email})
@@ -99,7 +99,7 @@ const Login = () => {
         if (!data.success) return toast.error(data.message)
         toast.success('Your password has been updated')
         setNewPassword('')
-        signIn(data.token)
+        signIn(data.user)
       }
 
     } catch (error) {
@@ -125,10 +125,10 @@ const Login = () => {
   }
 
   useEffect(()=> {
-    if (token) {
+    if (isLoggedIn) {
       navigate('/')
     }
-  },[token])
+  },[isLoggedIn])
 
   const codeInput = (
     <input

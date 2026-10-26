@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
 import EditProductModal from '../components/EditProductModal'
 
-const List = ({token}) => {
+const List = () => {
 
 
   const [list,setList] = useState([])
@@ -34,7 +34,7 @@ const List = ({token}) => {
     if (!window.confirm(`Delete "${item.name}"? This cannot be undone.`)) return
     const id = item._id
     try {
-      const response = await axios.post(backendUrl + '/api/product/remove', {id} , {headers:{token}})
+      const response = await axios.post(backendUrl + '/api/product/remove', {id})
 
       if (response.data.success) {
         toast.success(response.data.message)
@@ -91,7 +91,6 @@ const List = ({token}) => {
         editing &&
         <EditProductModal
           product={editing}
-          token={token}
           onClose={()=>setEditing(null)}
           onSaved={async ()=>{ setEditing(null); await fetchList() }}
         />

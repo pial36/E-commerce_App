@@ -1,20 +1,24 @@
-import jwt from 'jsonwebtoken'
+import { SESSIONS, verifyAccessToken } from '../utils/authSession.js'
 
+// Admin routes: reads the admin access token from its httpOnly cookie.
+// A 401 tells the admin panel to call /api/auth/admin/refresh and retry once.
 const adminAuth = async (req,res,next) => {
 
+    const token = req.cookies?.[SESSIONS.admin.accessCookie]
+
+    if (!token) {
+        return res.status(401).json({ success: false, code: 'NOT_AUTHENTICATED', message: 'Not Authorized Login Again' })
+    }
+
     try {
-        const { token } = req.headers
-        if (!token) {
-            return res.json({success:false,message:"Not Authoried Login Again"})
-        }
-        const token_decode = jwt.verify(token,process.env.JWT_SECRET);
-        if (token_decode.role !== 'admin'){
-            return res.json({success:false,message:"Not Authoried Login Again"})
-        } 
+        verifyAccessToken(token, 'admin')
         next()
     } catch (error) {
-        console.log(error)
-        res.json({ success: false, message: error.message })
+        res.status(401).json({
+            success: false,
+            code: error.name === 'TokenExpiredError' ? 'TOKEN_EXPIRED' : 'NOT_AUTHENTICATED',
+            message: 'Not Authorized Login Again',
+        })
     }
 
 }

@@ -1,13 +1,15 @@
 import validator from "validator"
 import bcrypt from "bcrypt"
-import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import userModel from "../models/userModel.js"
 import { sendMail, codeEmail } from "../config/mailer.js"
+import { issueSession, endAllSessions } from "../utils/authSession.js"
+import { publicUser } from "./authController.js"
 
-
-const creatrToken = (id) => {
-    return jwt.sign({ id },process.env.JWT_SECRET)
+// Signs the customer in with httpOnly session cookies and replies with their profile
+const signInUser = async (req, res, user) => {
+    await issueSession(req, res, 'user', user._id)
+    res.json({ success: true, user: publicUser(user) })
 }
 
 // at least 1 uppercase, 1 lowercase, 1 number, 1 special character, min 8 characters
@@ -113,8 +115,7 @@ const loginUser = async (req,res) => {
             return res.json({success:true, needsVerification:true, email:user.email})
         }
 
-        const token = creatrToken(user._id)
-        res.json({success:true,token})
+        await signInUser(req, res, user)
 
     } catch (error) {
         console.log(error);
@@ -188,7 +189,7 @@ const verifyEmail = async (req,res) => {
             return res.json({success:false, message:"Please request a new code"})
         }
         if (user.emailVerified) {
-            return res.json({success:true, token:creatrToken(user._id)})
+            return signInUser(req, res, user)
         }
 
         const error = await checkCode(user, 'emailVerification', code)
@@ -200,7 +201,7 @@ const verifyEmail = async (req,res) => {
         user.emailVerification = undefined
         await user.save()
 
-        res.json({success:true, token:creatrToken(user._id)})
+        await signInUser(req, res, user)
 
     } catch (error) {
         console.log(error);
@@ -276,7 +277,9 @@ const resetPassword = async (req,res) => {
         user.emailVerification = undefined
         await user.save()
 
-        res.json({success:true, message:"Password updated", token:creatrToken(user._id)})
+        // a new password signs out every other device, then signs in this one
+        await endAllSessions('user', user._id)
+        await signInUser(req, res, user)
 
     } catch (error) {
         console.log(error);
@@ -292,8 +295,8 @@ const adminLogin = async (req,res) => {
     const {email,password} = req.body
 
     if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
-        const token = jwt.sign({ role: 'admin' },process.env.JWT_SECRET,{ expiresIn: '1d' });
-        res.json({success:true,token})
+        await issueSession(req, res, 'admin', 'admin')
+        res.json({success:true})
     }else{
         res.json({success:false,message:"Invalid credentials"})
     }

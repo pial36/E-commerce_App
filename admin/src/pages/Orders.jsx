@@ -5,18 +5,14 @@ import axios from 'axios'
 import { backendUrl, currency } from '../App'
 import {toast} from 'react-toastify'
 import { assets } from '../assets/assets'
-const Orders = ({token}) => {
+const Orders = () => {
 
   const [orders, setOrders] = useState([])
 
   const fetchAllOrders = async () => {
 
-    if (!token) {
-      return null;
-    }
-
     try {
-      const response = await axios.post(backendUrl + '/api/order/list',{},{headers:{token}})
+      const response = await axios.post(backendUrl + '/api/order/list',{})
       if (response.data.success) {
         setOrders(response.data.orders)
       } else {
@@ -30,7 +26,7 @@ const Orders = ({token}) => {
 
   const statusHandler = async (event, orderId) => {
     try {
-      const response = await axios.post(backendUrl + '/api/order/status', {orderId, status:event.target.value} , {headers: {token}})
+      const response = await axios.post(backendUrl + '/api/order/status', {orderId, status:event.target.value})
       if (response.data.success) {
       await fetchAllOrders()
       }
@@ -44,7 +40,7 @@ const Orders = ({token}) => {
     const customer = [order.address.firstName, order.address.lastName].filter(Boolean).join(' ')
     if (!window.confirm(`Delete the order from ${customer || 'this customer'} (${currency}${order.amount})? This cannot be undone.`)) return
     try {
-      const response = await axios.post(backendUrl + '/api/order/delete', {orderId: order._id}, {headers: {token}})
+      const response = await axios.post(backendUrl + '/api/order/delete', {orderId: order._id})
       if (response.data.success) {
         toast.success(response.data.message)
         await fetchAllOrders()
@@ -100,7 +96,7 @@ const Orders = ({token}) => {
 
   useEffect(() => {
     fetchAllOrders();
-  },[token])
+  },[])
 
   return (
     <div>
