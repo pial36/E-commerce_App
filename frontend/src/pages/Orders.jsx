@@ -5,17 +5,17 @@ import axios from 'axios';
 
 const Orders = () => {
 
-const { backendUrl, token, currency } = useContext(ShopContext);
+const { backendUrl, isLoggedIn, currency } = useContext(ShopContext);
 
 const [orderData,setOrderData] = useState([])
 
 const loadOrderData = async () => {
   try {
-    if (!token) {
+    if (!isLoggedIn) {
       return null
     }  
 
-    const response = await axios.post(backendUrl + '/api/order/userorders',{},{headers:{token}})
+    const response = await axios.post(backendUrl + '/api/order/userorders',{})
     if (response.data) {
       let allOrderItem = []
       response.data.orders.map((order)=>{
@@ -40,7 +40,7 @@ const loadOrderData = async () => {
 useEffect(()=> {
   loadOrderData()
 
-},[token])
+},[isLoggedIn])
 
   return (
     <div className='border-t pt-16'>

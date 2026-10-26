@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios'
+import { refreshSession, setSignedOutHandler } from "../authClient";
 
 export const ShopContext = createContext();
 
@@ -29,9 +30,12 @@ const readGuestCart = () => {
     const backendUrl = import.meta.env.VITE_BACKEND_URL
     const [search,setSearch] = useState('');
     const [showSearch,setShowSearch] = useState(false);
-    const [cartItems,setCartItems] = useState(() => localStorage.getItem('token') ? {} : readGuestCart());
+    const [cartItems,setCartItems] = useState(readGuestCart);
     const [products,setProducts] = useState([]);
-    const [token,setToken] = useState('');
+    // signed-in customer ({ name, email }) or null; the session itself is in httpOnly cookies
+    const [user,setUser] = useState(null);
+    const [authReady,setAuthReady] = useState(false);
+    const isLoggedIn = !!user;
     const [cartOpen,setCartOpen] = useState(false);
     const [lastAddedId,setLastAddedId] = useState(null);
     const navigate = useNavigate();
@@ -60,11 +64,11 @@ const readGuestCart = () => {
         setLastAddedId(itemId);
         setCartOpen(true);
 
-        if (token) {
+        if (isLoggedIn) {
             try {
                 
 
-                await axios.post(backendUrl + '/api/cart/add', {itemId,size}, {headers:{token}})
+                await axios.post(backendUrl + '/api/cart/add', {itemId,size})
 
             } catch (error) {
                 console.log(error);
@@ -97,10 +101,10 @@ const readGuestCart = () => {
 
         setCartItems(cartData);
 
-        if (token) {
+        if (isLoggedIn) {
             try {
                 
-                await axios.post(backendUrl + '/api/cart/update', {itemId,size,quantity}, {headers:{token}})
+                await axios.post(backendUrl + '/api/cart/update', {itemId,size,quantity})
 
             } catch (error) {
                 console.log(error);
@@ -145,10 +149,10 @@ const readGuestCart = () => {
             
         }
     }
-    const getUserCart = async ( token ) => {
+    const getUserCart = async () => {
         try {
             
-            const response = await axios.post(backendUrl + '/api/cart/get',{},{headers:{token}})
+            const response = await axios.post(backendUrl + '/api/cart/get',{})
             if(response.data.success){
                 const cartData = structuredClone(response.data.cartData || {})
 
@@ -160,7 +164,7 @@ const readGuestCart = () => {
                         if (guestQuantity > 0) {
                             const quantity = (cartData[itemId]?.[size] || 0) + guestQuantity
                             cartData[itemId] = { ...cartData[itemId], [size]: quantity }
-                            await axios.post(backendUrl + '/api/cart/update', {itemId,size,quantity}, {headers:{token}})
+                            await axios.post(backendUrl + '/api/cart/update', {itemId,size,quantity})
                         }
                     }
                 }
@@ -178,27 +182,48 @@ const readGuestCart = () => {
         getProductsData()
     },[])
 
+    // On load, ask the API whether this browser has a session (refresh cookie)
     useEffect(() => {
-        const storedToken = localStorage.getItem('token'); // Store token once from localStorage
-        if (!token && storedToken) {
-            setToken(storedToken);  // Set token state
+        // tokens used to be kept in localStorage; they are no longer used
+        localStorage.removeItem('token')
+
+        refreshSession().then((sessionUser) => {
+            setUser(sessionUser)
+            setAuthReady(true)
+        })
+
+        // the session ended mid-visit (expired or signed out elsewhere)
+        setSignedOutHandler(() => {
+            setUser(null)
+            setCartItems({})
+        })
+    }, []);
+
+    const logout = async () => {
+        try {
+            await axios.post(backendUrl + '/api/auth/logout')
+        } catch (error) {
+            console.log(error)
         }
-    }, []);  // This effect runs only once on component mount
-    
+        setUser(null)
+        setCartItems({})
+        navigate('/login')
+    }
+
     // keep the guest cart in localStorage (signed-in carts are saved on the server)
     useEffect(() => {
-        if (!localStorage.getItem('token')) {
+        if (authReady && !isLoggedIn) {
             localStorage.setItem(GUEST_CART_KEY, JSON.stringify(cartItems))
         }
-    }, [cartItems, token]);
+    }, [cartItems, authReady, isLoggedIn]);
 
-    // Fetch cart data whenever the token changes
+    // Fetch the account cart once someone is signed in
     useEffect(() => {
-        if (token) {
-            getUserCart(token);  // Fetch user cart when token is set
+        if (isLoggedIn) {
+            getUserCart();
         }
-    }, [token]);  // This effect runs whenever the token state changes
-    
+    }, [isLoggedIn]);
+
 
     const value = {
         products ,currency, delivery_fee, shippingRates,
@@ -206,7 +231,7 @@ const readGuestCart = () => {
         cartItems,setCartItems,addToCart,
         getCartCount,updateQuantity,
         getCartAmount, navigate, backendUrl,
-        setToken,token,
+        user, setUser, isLoggedIn, authReady, logout,
         cartOpen,setCartOpen,lastAddedId
     }
 

@@ -16,16 +16,7 @@ const Navbar = ({ theme, toggleTheme }) => {
 
     const [visible,setVisible] = useState(false);
 
-    const {setShowSearch , getCartCount, navigate, token, setToken, setCartItems, setCartOpen} = useContext(ShopContext);
-
-    const logout =() => {
-
-      localStorage.removeItem('token')
-      setToken('')
-      setCartItems({});
-      navigate('/login')
-
-    }
+    const {setShowSearch , getCartCount, navigate, isLoggedIn, logout, setCartOpen} = useContext(ShopContext);
 
   return (
     <header className='sticky top-0 z-40 -mx-4 px-4 sm:-mx-[5vw] sm:px-[5vw] md:-mx-[7vw] md:px-[7vw] lg:-mx-[9vw] lg:px-[9vw] bg-[var(--background-color)] border-b border-gray-200'>
@@ -56,12 +47,12 @@ const Navbar = ({ theme, toggleTheme }) => {
           </button>
 
           <div className='group relative'>
-            <button onClick={()=> token ? null : navigate('/login')} aria-label='Account' className={iconButton}>
+            <button onClick={()=> isLoggedIn ? null : navigate('/login')} aria-label='Account' className={iconButton}>
               <img className='nav-icon w-[18px]' src={assets.profile_icon} alt="" />
             </button>
 
               {/* -----DropDown------- */}
-            {token &&
+            {isLoggedIn &&
             <div className='group-hover:block hidden absolute dropdown-menu right-0 pt-3 z-50'>
               <div className='flex flex-col gap-2 w-40 py-3 px-5 bg-white text-gray-500 text-sm rounded shadow-lg border border-gray-100'>
                 <p className='cursor-pointer hover:text-black'>My Profile</p>

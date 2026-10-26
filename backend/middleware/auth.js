@@ -1,22 +1,25 @@
-import jwt from 'jsonwebtoken'
+import { SESSIONS, verifyAccessToken } from '../utils/authSession.js'
 
+// Customer routes: reads the access token from its httpOnly cookie.
+// A 401 tells the store to call /api/auth/refresh and retry once.
 const authUser = async (req, res, next) => {
 
-    const { token } = req.headers;
+    const token = req.cookies?.[SESSIONS.user.accessCookie]
 
     if (!token) {
-        return res.json({ success: false,message: 'Not Authorized Login Again' })
-
+        return res.status(401).json({ success: false, code: 'NOT_AUTHENTICATED', message: 'Please sign in' })
     }
 
     try {
-        
-        const token_decode = jwt.verify(token, process.env.JWT_SECRET)
-        req.body.userId = token_decode.id 
+        const payload = verifyAccessToken(token, 'user')
+        req.body.userId = payload.sub
         next()
     } catch (error) {
-        console.log(error);
-        res.json({ success: false,message: error.message })
+        res.status(401).json({
+            success: false,
+            code: error.name === 'TokenExpiredError' ? 'TOKEN_EXPIRED' : 'NOT_AUTHENTICATED',
+            message: 'Please sign in again',
+        })
     }
 
 }

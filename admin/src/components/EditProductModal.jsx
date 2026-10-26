@@ -11,7 +11,7 @@ const SIZES = ['S', 'M', 'L', 'XL', 'XXL']
 const fieldClass = 'w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-800 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900'
 const labelClass = 'block text-sm font-medium text-gray-700 mb-1.5'
 
-const EditProductModal = ({ product, token, onClose, onSaved }) => {
+const EditProductModal = ({ product, onClose, onSaved }) => {
 
   const [name,setName] = useState(product.name)
   const [description,setDescription] = useState(product.description)
@@ -53,7 +53,7 @@ const EditProductModal = ({ product, token, onClose, onSaved }) => {
       formData.append('bestseller', bestseller)
       newImages.forEach((file, index) => file && formData.append(`image${index + 1}`, file))
 
-      const response = await axios.post(backendUrl + '/api/product/update', formData, { headers: { token } })
+      const response = await axios.post(backendUrl + '/api/product/update', formData)
       if (response.data.success) {
         toast.success(response.data.message)
         onSaved()

@@ -1,19 +1,18 @@
-// Admin session rules: the panel signs out when the token expires, after a
-// period with no activity (also while the tab was closed), or when the API
-// says the session is no longer valid.
+import axios from 'axios'
+
+// The admin session lives in httpOnly cookies set by the API (separate from
+// customer cookies), so JavaScript never sees a token. Every request sends the
+// cookies; when the 15-minute access cookie has run out the API answers 401,
+// and we swap the refresh cookie for new ones once and retry. The server ends
+// admin sessions 1 day after sign-in; the panel also signs out after a period
+// with no activity, including while the tab was closed.
+
+axios.defaults.withCredentials = true
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 export const IDLE_LIMIT_MS = 30 * 60 * 1000
 const LAST_ACTIVITY_KEY = 'adminLastActivity'
-
-// Expiry time (ms) from the JWT payload, or null for tokens without one
-export const getTokenExpiry = (token) => {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))
-    return typeof payload.exp === 'number' ? payload.exp * 1000 : null
-  } catch {
-    return null
-  }
-}
 
 export const markActivity = () => {
   try { localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now())) } catch { /* storage unavailable */ }
@@ -29,6 +28,32 @@ export const isIdleTooLong = () => {
   return last !== null && Date.now() - last > IDLE_LIMIT_MS
 }
 
-// Messages the backend's adminAuth / jwt.verify send for a bad or expired token
-export const isAuthFailure = (message = '') =>
-  /not authori|jwt expired|jwt malformed|invalid signature|invalid token|jwt must be provided/i.test(message)
+let refreshing = null
+
+// Resolves to true when the admin session could be renewed
+export const refreshAdminSession = () => {
+  if (!refreshing) {
+    refreshing = axios.post(backendUrl + '/api/auth/admin/refresh')
+      .then(response => !!response.data.success)
+      .catch(() => false)
+      .finally(() => { refreshing = null })
+  }
+  return refreshing
+}
+
+export const logoutAdminSession = () =>
+  axios.post(backendUrl + '/api/auth/admin/logout').catch(() => {})
+
+let onSignedOut = () => {}
+export const setSignedOutHandler = (handler) => { onSignedOut = handler }
+
+axios.interceptors.response.use(response => response, async (error) => {
+  const { config, response } = error
+  if (response?.status === 401 && config && !config._retried && !config.url.includes('/api/auth/')) {
+    config._retried = true
+    if (await refreshAdminSession()) return axios(config)
+    onSignedOut()
+    error.message = 'Your session has expired. Please sign in again.'
+  }
+  return Promise.reject(error)
+})

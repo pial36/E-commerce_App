@@ -6,7 +6,7 @@ import { assets } from '../assets/assets'
 
 const inputClass = 'rounded-md w-full px-3.5 py-2.5 border border-gray-300 text-sm outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900'
 
-const Login = ({setToken}) => {
+const Login = ({onLogin}) => {
 
     const [email,SetEmail] = useState('')
     const [password,setPassword] = useState('')
@@ -19,7 +19,8 @@ const Login = ({setToken}) => {
             setSubmitting(true)
             const response = await axios.post(backendUrl + '/api/user/admin',{email,password})
             if (response.data.success) {
-                setToken(response.data.token)
+                // the API set the admin session cookies
+                onLogin()
             }else{
                 toast.error(response.data.message)
             }

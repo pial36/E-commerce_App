@@ -30,7 +30,7 @@ const customerName = (order) => [order.address?.firstName, order.address?.lastNa
 
 // Bell in the admin header: polls for orders placed since the admin last
 // looked, shows the count as a badge, and toasts when a new one arrives.
-const OrderNotifications = ({ token }) => {
+const OrderNotifications = () => {
 
   const [lastSeen,setLastSeen] = useState(readLastSeen)
   const [count,setCount] = useState(0)
@@ -51,7 +51,7 @@ const OrderNotifications = ({ token }) => {
 
   const poll = useCallback(async () => {
     try {
-      const response = await axios.post(backendUrl + '/api/order/recent', { since: lastSeen }, { headers: { token } })
+      const response = await axios.post(backendUrl + '/api/order/recent', { since: lastSeen })
       if (!response.data.success) return
 
       const fresh = response.data.orders
@@ -67,7 +67,7 @@ const OrderNotifications = ({ token }) => {
     } catch (error) {
       console.log(error)
     }
-  },[lastSeen, token])
+  },[lastSeen])
 
   useEffect(()=>{
     knownIds.current = null
