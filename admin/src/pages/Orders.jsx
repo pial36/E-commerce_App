@@ -112,8 +112,20 @@ const Orders = () => {
         {
 
           orders.map((order,index) => (
-            <div className='grid grid-cols-1 sm:grid-cols-[0.5fr_2fr_1fr] lg:grid-cols-[0.5fr_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-sm text-gray-700' key={index}>
-                  <img className='w-12' src={assets.parcel_icon} alt="" />
+            <div className='grid grid-cols-1 sm:grid-cols-[minmax(80px,0.8fr)_2fr_1fr] lg:grid-cols-[minmax(80px,0.8fr)_2fr_1fr_1fr_1fr] gap-3 items-start border-2 border-gray-200 p-5 md:p-8 my-3 md:my-4 text-xs sm:text-sm text-gray-700' key={index}>
+                  {/* photos of the ordered items (the colour/photo the customer picked) */}
+                  <div className='flex flex-wrap gap-2'>
+                    {
+                      order.items.some(item => item.image?.[0])
+                      ? order.items.map((item,itemIndex) => (
+                          <div key={itemIndex} className='relative' title={item.name + ' (' + item.size + ') x ' + item.quantity}>
+                            <img className='w-14 h-16 object-cover rounded-md border border-gray-200 bg-white' src={item.image?.[0] || assets.parcel_icon} alt={item.name} />
+                            {item.quantity > 1 && <span className='absolute -top-1.5 -right-1.5 min-w-5 h-5 px-1 rounded-full bg-gray-900 text-white text-[10px] font-semibold leading-5 text-center'>{item.quantity}</span>}
+                          </div>
+                        ))
+                      : <img className='w-12' src={assets.parcel_icon} alt='' />
+                    }
+                  </div>
                   <div>
 
                     <div>

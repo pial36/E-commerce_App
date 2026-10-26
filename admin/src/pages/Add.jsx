@@ -71,23 +71,23 @@ const Add = () => {
   return (
     <form onSubmit={onSubmitHandler} className='flex flex-col w-full items-start gap-3'>
         <div>
-          <p className='mb-2'>Upload Image</p>
+          <p className='mb-2'>Upload Image <span className='text-xs text-gray-400'>(saved as 390 × 450 px, cropped to fit)</span></p>
 
           <div className='flex gap-2'>
             <label htmlFor="image1">
-            <img className='w-20' src={!image1 ? assets.upload_area : URL.createObjectURL(image1)} alt="" />
+            <img className='w-20 aspect-[390/450] object-cover rounded-md border border-gray-200 bg-white cursor-pointer' src={!image1 ? assets.upload_area : URL.createObjectURL(image1)} alt="" />
             <input onChange={(e)=>setImage1(e.target.files[0])} type="file"  id="image1" hidden />
             </label>
             <label htmlFor="image2">
-            <img className='w-20' src={!image2 ? assets.upload_area : URL.createObjectURL(image2)} alt="" />
+            <img className='w-20 aspect-[390/450] object-cover rounded-md border border-gray-200 bg-white cursor-pointer' src={!image2 ? assets.upload_area : URL.createObjectURL(image2)} alt="" />
             <input onChange={(e)=>setImage2(e.target.files[0])} type="file"  id="image2" hidden />
             </label>
             <label htmlFor="image3">
-            <img className='w-20' src={!image3 ? assets.upload_area : URL.createObjectURL(image3)} alt="" />
+            <img className='w-20 aspect-[390/450] object-cover rounded-md border border-gray-200 bg-white cursor-pointer' src={!image3 ? assets.upload_area : URL.createObjectURL(image3)} alt="" />
             <input onChange={(e)=>setImage3(e.target.files[0])} type="file"  id="image3" hidden />
             </label>
             <label htmlFor="image4">
-            <img className='w-20' src={!image4 ? assets.upload_area : URL.createObjectURL(image4)} alt="" />
+            <img className='w-20 aspect-[390/450] object-cover rounded-md border border-gray-200 bg-white cursor-pointer' src={!image4 ? assets.upload_area : URL.createObjectURL(image4)} alt="" />
             <input onChange={(e)=>setImage4(e.target.files[0])} type="file"  id="image4" hidden />
             </label>
           </div>

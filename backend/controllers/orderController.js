@@ -49,11 +49,17 @@ const buildOrderItems = async (requestItems, shippingMethod = 'inside_dhaka') =>
             throw new Error(`Size not available for ${product.name}`)
         }
 
+        // the photo the customer picked (they can show different colours); default first
+        const imageIndex = Number(requestItem.imageIndex)
+        const chosen = Number.isInteger(imageIndex) && imageIndex >= 0 && imageIndex < product.image.length ? imageIndex : 0
+
         items.push({
             _id: product._id.toString(),
             name: product.name,
             price: product.price,
-            image: product.image,
+            // image[0] is the picked photo, which is what order screens show
+            image: [product.image[chosen]],
+            imageIndex: chosen,
             category: product.category,
             subCategory: product.subCategory,
             size: requestItem.size,

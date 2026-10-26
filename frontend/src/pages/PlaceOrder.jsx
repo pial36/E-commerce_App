@@ -2,6 +2,7 @@ import React, { useContext, useState } from 'react'
 import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
+import { parseCartKey, lineImage } from '../cartKey'
 import { toast } from 'react-toastify'
 
 const SAVED_ADDRESS_KEY = 'checkoutAddress'
@@ -164,9 +165,9 @@ const PlaceOrder = () => {
   for (const productId in cartItems) {
     const product = products.find(item => item._id === productId)
     if (!product) continue
-    for (const size in cartItems[productId]) {
-      if (cartItems[productId][size] > 0) {
-        lines.push({ product, size, quantity: cartItems[productId][size] })
+    for (const key in cartItems[productId]) {
+      if (cartItems[productId][key] > 0) {
+        lines.push({ product, key, ...parseCartKey(key), quantity: cartItems[productId][key] })
       }
     }
   }
@@ -203,7 +204,7 @@ const PlaceOrder = () => {
       // the server looks up prices and shipping fees itself; we only send what was chosen
       const orderData = {
         address: { ...formData, email: formData.email.trim(), phone: formatPhone(formData.phone, formData.phoneCountry) },
-        items: lines.map(line => ({ _id: line.product._id, size: line.size, quantity: line.quantity })),
+        items: lines.map(line => ({ _id: line.product._id, size: line.size, imageIndex: line.imageIndex, quantity: line.quantity })),
         shippingMethod,
         // tells the API this is a guest order rather than an expired session
         asGuest: !isLoggedIn,
@@ -255,9 +256,9 @@ const PlaceOrder = () => {
     <div className='flex flex-col gap-5'>
       {
         lines.map((line) => (
-          <div key={line.product._id + line.size} className='flex items-center gap-4'>
+          <div key={line.product._id + line.key} className='flex items-center gap-4'>
             <div className='relative flex-shrink-0'>
-              <img src={line.product.image[0]} className='w-16 h-16 object-cover rounded-md border border-gray-200 bg-white' alt={line.product.name} />
+              <img src={lineImage(line.product, line.imageIndex)} className='w-16 h-16 object-cover rounded-md border border-gray-200 bg-white' alt={line.product.name} />
               <span className='absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-gray-900 text-white text-[11px] font-semibold flex items-center justify-center'>{line.quantity}</span>
             </div>
             <div className='flex-1 min-w-0'>

@@ -9,7 +9,8 @@ const Product = () => {
   const {productId} = useParams();
   const { products, currency ,addToCart } = useContext(ShopContext);
   const [productData,setProductData] = useState(false);
-  const [image,setImage] = useState('')
+  // index of the photo being viewed; it is the one added to the cart
+  const [imageIndex,setImageIndex] = useState(0)
   const [size,setSize] =  useState('')
 
   const fetchProductData = async () => {
@@ -17,7 +18,7 @@ const Product = () => {
     products.map((item)=>{
       if (item._id === productId) {
         setProductData(item)
-        setImage(item.image[0])
+        setImageIndex(0)
         
         return null;
       }
@@ -39,13 +40,13 @@ const Product = () => {
               <div className='no-scrollbar flex sm:flex-col overflow-x-auto sm:overflow-y-scroll justify-between sm:justify-normal sm:w-[18.7%] w-full'>
                   {
                     productData.image.map((item,index)=>(
-                      <img onClick={()=>setImage(item)} src={item} key={index} className='w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer' alt="" />
+                      <img onClick={()=>setImageIndex(index)} src={item} key={index} className={`w-[24%] sm:w-full sm:mb-3 flex-shrink-0 cursor-pointer border-2 ${index === imageIndex ? 'border-gray-900' : 'border-transparent opacity-80 hover:opacity-100'}`} alt="" />
                     ))
                   }
               </div>
 
               <div className='w-full sm:w-[80%]'>
-                  <img className='w-full h-auto' src={image} alt="" />
+                  <img className='w-full h-auto' src={productData.image[imageIndex] || productData.image[0]} alt="" />
               </div>
           </div>
 
@@ -72,7 +73,7 @@ const Product = () => {
                   </div>
 
                 </div>
-                <button onClick={()=>addToCart(productData._id,size)} className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CART</button>
+                <button onClick={()=>addToCart(productData._id,size,imageIndex)} className='bg-black text-white px-8 py-3 text-sm active:bg-gray-700'>ADD TO CART</button>
                 <hr className='mt-8 sm:w-4/5' />
                 <div className='text-sm text-gray-500 mt-5 flex flex-col gap-1'>
                       <p>100% Original Product.</p>

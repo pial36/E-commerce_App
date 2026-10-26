@@ -83,14 +83,14 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
 
           {/* Images */}
           <div>
-            <p className={labelClass}>Images <span className='font-normal text-gray-500'>(click one to replace it)</span></p>
+            <p className={labelClass}>Images <span className='font-normal text-gray-500'>(click one to replace it · saved as 390 × 450 px)</span></p>
             <div className='flex flex-wrap gap-3'>
               {
                 [0,1,2,3].map((index)=>{
                   const preview = newImages[index] ? URL.createObjectURL(newImages[index]) : product.image[index] || assets.upload_area
                   return (
                     <label key={index} htmlFor={`edit-image-${index}`} className='relative cursor-pointer group'>
-                      <img src={preview} className='w-20 h-24 object-cover rounded-md border border-gray-200 bg-gray-50' alt={`Image ${index + 1}`} />
+                      <img src={preview} className='w-20 aspect-[390/450] object-cover rounded-md border border-gray-200 bg-gray-50' alt={`Image ${index + 1}`} />
                       <span className='absolute inset-0 rounded-md bg-black/40 text-white text-xs font-medium flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity'>Change</span>
                       {newImages[index] && <span className='absolute -top-2 -right-2 bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded-full'>New</span>}
                       <input id={`edit-image-${index}`} type='file' accept='image/*' hidden onChange={(e)=>pickImage(index, e.target.files[0] || null)} />
