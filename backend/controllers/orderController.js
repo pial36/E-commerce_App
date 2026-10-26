@@ -2,6 +2,7 @@ import orderModel from "../models/orderModel.js"
 import userModel from "../models/userModel.js"
 import productModel from "../models/productModel.js"
 import Stripe from 'stripe'
+import crypto from 'crypto'
 import razorpay from 'razorpay'
 
 
@@ -65,31 +66,64 @@ const buildOrderItems = async (requestItems, shippingMethod = 'inside_dhaka') =>
     return { items, amount, shipping: { method: shippingMethod, label: shipping.label, fee: shipping.fee } }
 }
 
+const hashGuestKey = (key) => crypto.createHash('sha256').update(String(key)).digest('hex')
+
+// Delivery details are required for every order, guest or not
+const validateAddress = (address) => {
+    if (!address || typeof address !== 'object') return 'Please enter your delivery details'
+    const required = { email: 'an email or phone number', lastName: 'a last name', street: 'an address', city: 'a city', phone: 'a phone number' }
+    for (const [field, label] of Object.entries(required)) {
+        const value = address[field]
+        if (typeof value !== 'string' || !value.trim()) return `Please enter ${label}`
+        if (value.length > 200) return 'Delivery details are too long'
+    }
+    return null
+}
+
+// Fields shared by COD and card orders. Guests get a random key (only its
+// hash is stored) that lets their browser confirm the card payment later.
+const newOrderFields = (userId, address, items, amount, shipping, paymentMethod) => {
+    const guest = !userId
+    const guestKey = guest ? crypto.randomBytes(24).toString('base64url') : undefined
+    return {
+        guestKey,
+        orderData: {
+            userId: userId || undefined,
+            guest,
+            guestKeyHash: guest ? hashGuestKey(guestKey) : undefined,
+            items,
+            amount,
+            address,
+            shipping,
+            paymentMethod,
+            payment:false,
+            date: Date.now()
+        }
+    }
+}
+
 //  Placing Order using COD method
 const placeOrder = async (req,res) => {
 
     try {
 
         const { userId, address } = req.body
+        const addressError = validateAddress(address)
+        if (addressError) {
+            return res.json({success: false, message: addressError})
+        }
         const { items, amount, shipping } = await buildOrderItems(req.body.items, req.body.shippingMethod)
 
-        const orderData = {
-            userId,
-            items,
-            amount,
-            address,
-            shipping,
-            paymentMethod:"COD",
-            payment:false,
-            date: Date.now()
-        }
+        const { orderData, guestKey } = newOrderFields(userId, address, items, amount, shipping, "COD")
 
         const newOrder = new orderModel(orderData)
         await newOrder.save()
 
-        await userModel.findByIdAndUpdate(userId,{cartData:{}})
+        if (userId) {
+            await userModel.findByIdAndUpdate(userId,{cartData:{}})
+        }
         
-        res.json({success: true, message: "Order Placed"})
+        res.json({success: true, message: "Order Placed", orderId: newOrder._id, amount, guestKey})
 
 
     } catch (error) {
@@ -106,19 +140,14 @@ const placeOrderStripe = async (req,res) => {
     try {
         
         const { userId, address } = req.body
+        const addressError = validateAddress(address)
+        if (addressError) {
+            return res.json({success: false, message: addressError})
+        }
         const { items, amount, shipping } = await buildOrderItems(req.body.items, req.body.shippingMethod)
         const { origin } = req.headers;
 
-        const orderData = {
-            userId,
-            items,
-            amount,
-            address,
-            shipping,
-            paymentMethod:"Stripe",
-            payment:false,
-            date: Date.now()
-        }
+        const { orderData, guestKey } = newOrderFields(userId, address, items, amount, shipping, "Stripe")
 
         const newOrder = new orderModel(orderData)
         await newOrder.save()
@@ -156,7 +185,7 @@ const placeOrderStripe = async (req,res) => {
         newOrder.stripeSessionId = session.id
         await newOrder.save()
 
-        res.json({success:true,session_url:session.url})
+        res.json({success:true,session_url:session.url,orderId:newOrder._id,guestKey})
 
     } catch (error) {
         console.log(error);
@@ -166,13 +195,17 @@ const placeOrderStripe = async (req,res) => {
 
 // Verify Stripe
 // Payment status comes from Stripe, not from the `success` query param,
-// and only the user who placed the order can verify or cancel it.
+// and only whoever placed the order can verify or cancel it: the signed-in
+// customer, or for a guest order the browser holding its guest key.
 const verifyStripe = async (req,res) => {
 
-    const { orderId, userId } = req.body
+    const { orderId, userId, guestKey } = req.body
 
     try {
-        const order = await orderModel.findOne({ _id: orderId, userId })
+        let order = await orderModel.findOne(userId ? { _id: orderId, userId } : { _id: orderId, guest: true })
+        if (order && !userId && (!guestKey || hashGuestKey(guestKey) !== order.guestKeyHash)) {
+            order = null
+        }
         if (!order || !order.stripeSessionId) {
             return res.json({success: false, message: "Order not found"})
         }
@@ -186,8 +219,10 @@ const verifyStripe = async (req,res) => {
         if (session.payment_status === 'paid') {
             order.payment = true
             await order.save()
-            await userModel.findByIdAndUpdate(userId, {cartData: {}})
-            res.json({success: true});
+            if (userId) {
+                await userModel.findByIdAndUpdate(userId, {cartData: {}})
+            }
+            res.json({success: true, amount: order.amount});
 
         } else {
             await orderModel.deleteOne({ _id: order._id, payment: false })
