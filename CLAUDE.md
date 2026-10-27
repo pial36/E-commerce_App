@@ -62,6 +62,10 @@ Do NOT set `PORT` — Hostinger assigns it; `server.js` reads `process.env.PORT 
 ```
 VITE_BACKEND_URL = https://api.velariqfashion.com
 ```
+Frontend only, optional:
+```
+VITE_META_PIXEL_ID = <Meta Pixel ID>   # enables the Meta Pixel (frontend/src/metaPixel.js); unset = pixel off
+```
 Vite inlines this at BUILD time. Changing it requires a rebuild, not just a restart.
 Local `.env` files still point to `http://localhost:4000` — that is intentional for dev.
 

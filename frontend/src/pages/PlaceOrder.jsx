@@ -1,8 +1,9 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import { parseCartKey, lineImage } from '../cartKey'
+import { trackInitiateCheckout, trackPurchase } from '../metaPixel'
 import { toast } from 'react-toastify'
 
 const SAVED_ADDRESS_KEY = 'checkoutAddress'
@@ -176,6 +177,15 @@ const PlaceOrder = () => {
   const shippingFee = shippingRates[shippingMethod].fee
   const total = subtotal + shippingFee
 
+  // Meta Pixel InitiateCheckout once, when the cart has loaded
+  const checkoutTracked = useRef(false)
+  useEffect(()=>{
+    if (!checkoutTracked.current && lines.length > 0) {
+      checkoutTracked.current = true
+      trackInitiateCheckout(lines, subtotal)
+    }
+  },[lines.length])
+
   const onSubmitHandler = async (event) => {
     event.preventDefault()
 
@@ -214,6 +224,7 @@ const PlaceOrder = () => {
         case 'cod': {
           const response = await axios.post(backendUrl + '/api/order/place',orderData)
           if (response.data.success) {
+            trackPurchase({ orderId: response.data.orderId, value: response.data.amount, lines })
             setCartItems({})
             if (isLoggedIn) {
               navigate('/orders')
