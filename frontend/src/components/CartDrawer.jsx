@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { parseCartKey, lineImage } from '../cartKey'
+import { discountOf, salePrice } from '../pricing'
 
 const HomeIcon = ({ className }) => (
   <svg className={className} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'>
@@ -108,7 +109,10 @@ const CartDrawer = () => {
                       <div className='flex-1 min-w-0'>
                         <p onClick={()=>goTo(`/product/${line.product._id}`)} className='text-sm font-medium truncate cursor-pointer hover:underline'>{line.product.name}</p>
                         <p className='text-xs text-gray-500 mt-1'>Size: {line.size}</p>
-                        <p className='text-sm font-semibold mt-1'>{formatPrice(line.product.price)}</p>
+                        <p className='text-sm font-semibold mt-1'>
+                          {formatPrice(salePrice(line.product))}
+                          {discountOf(line.product) > 0 && <span className='ml-2 text-xs font-normal text-gray-400 line-through'>{formatPrice(line.product.price)}</span>}
+                        </p>
 
                         <div className='flex items-center gap-4 mt-3'>
                           {/* Quantity stepper: minus turns into a bin at 1 */}
@@ -151,7 +155,7 @@ const CartDrawer = () => {
                 <img src={suggestion.image[0]} className='w-16 h-20 object-cover bg-gray-50' alt={suggestion.name} />
                 <div className='min-w-0'>
                   <p className='text-sm truncate'>{suggestion.name}</p>
-                  <p className='text-sm text-gray-500 mt-1'>{formatPrice(suggestion.price)}</p>
+                  <p className='text-sm text-gray-500 mt-1'>{formatPrice(salePrice(suggestion))}</p>
                 </div>
               </div>
               {

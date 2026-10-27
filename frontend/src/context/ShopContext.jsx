@@ -5,6 +5,7 @@ import axios from 'axios'
 import { refreshSession, setSignedOutHandler } from "../authClient";
 import { makeCartKey } from "../cartKey";
 import { trackAddToCart } from "../metaPixel";
+import { salePrice } from "../pricing";
 
 export const ShopContext = createContext();
 
@@ -129,7 +130,7 @@ const readGuestCart = () => {
             for(const item in cartItems[items]){
                 try {
                     if (cartItems[items][item] > 0) {
-                        totalAmount += itemInfo.price * cartItems[items][item]
+                        totalAmount += salePrice(itemInfo) * cartItems[items][item]
                     }
                 } catch (error) {
                     

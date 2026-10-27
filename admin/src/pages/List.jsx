@@ -4,6 +4,7 @@ import { backendUrl, currency } from '../App'
 import { toast } from 'react-toastify'
 import { assets } from '../assets/assets'
 import EditProductModal from '../components/EditProductModal'
+import { discountOf, salePrice } from '../pricing'
 
 const List = () => {
 
@@ -74,7 +75,10 @@ const List = () => {
                 <img className='w-12' src={item.image[0]} alt="" />
                 <p>{item.name}</p>
                 <p>{item.category}</p>
-                <p>{currency}{item.price}</p>
+                <p>
+                  {currency}{salePrice(item)}
+                  {discountOf(item) > 0 && <><span className='ml-1.5 text-xs text-gray-400 line-through'>{currency}{item.price}</span><span className='ml-1.5 text-xs font-semibold text-rose-600'>-{discountOf(item)}%</span></>}
+                </p>
                 <div className='flex justify-center items-center gap-3'>
                   <button onClick={()=>setEditing(item)} aria-label={`Edit ${item.name}`} title='Edit' className='w-7 h-7 flex items-center justify-center rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-200'>
                     <svg className='w-[18px] h-[18px]' viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='1.8' strokeLinecap='round' strokeLinejoin='round'><path d='M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z'/></svg>

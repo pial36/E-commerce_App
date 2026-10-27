@@ -4,6 +4,7 @@ import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
 import { useSearchParams } from 'react-router-dom';
+import { salePrice } from '../pricing';
 
 const CATEGORIES = ['Men', 'Women', 'Kid']
 
@@ -72,11 +73,11 @@ const Collection = () => {
 
     switch (sortType) {
       case 'low-high':
-        setFilterProducts(fpCopy.sort((a,b)=>(a.price - b.price)))
+        setFilterProducts(fpCopy.sort((a,b)=>(salePrice(a) - salePrice(b))))
         break;
 
       case 'high-low':
-        setFilterProducts(fpCopy.sort((a,b)=>(b.price - a.price)))
+        setFilterProducts(fpCopy.sort((a,b)=>(salePrice(b) - salePrice(a))))
         break;
 
         default:
@@ -145,7 +146,7 @@ const Collection = () => {
         <div className='grid grid-col-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
           {
             filterProducters.map((item,index)=>(
-              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} />
+              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} discountPercent={item.discountPercent} />
             ))
           }
         </div>

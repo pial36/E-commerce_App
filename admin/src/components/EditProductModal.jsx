@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { backendUrl } from '../App'
+import { backendUrl, currency } from '../App'
+import { salePrice } from '../pricing'
 import { assets } from '../assets/assets'
 
 const CATEGORIES = ['Men', 'Women', 'Kid']
@@ -16,6 +17,7 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
   const [name,setName] = useState(product.name)
   const [description,setDescription] = useState(product.description)
   const [price,setPrice] = useState(product.price)
+  const [discountPercent,setDiscountPercent] = useState(product.discountPercent || 0)
   const [category,setCategory] = useState(product.category)
   const [subCategory,setSubCategory] = useState(product.subCategory)
   const [sizes,setSizes] = useState(product.sizes || [])
@@ -47,6 +49,7 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
       formData.append('name', name)
       formData.append('description', description)
       formData.append('price', price)
+      formData.append('discountPercent', discountPercent || 0)
       formData.append('category', category)
       formData.append('subCategory', subCategory)
       formData.append('sizes', JSON.stringify(sizes))
@@ -111,7 +114,7 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
             <textarea id='edit-description' value={description} onChange={(e)=>setDescription(e.target.value)} rows={3} className={fieldClass} required />
           </div>
 
-          <div className='grid grid-cols-1 sm:grid-cols-3 gap-4'>
+          <div className='grid grid-cols-1 sm:grid-cols-4 gap-4'>
             <div>
               <label htmlFor='edit-category' className={labelClass}>Category</label>
               <select id='edit-category' value={category} onChange={(e)=>setCategory(e.target.value)} className={`${fieldClass} bg-white`}>
@@ -127,6 +130,11 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
             <div>
               <label htmlFor='edit-price' className={labelClass}>Price</label>
               <input id='edit-price' type='number' min='0' value={price} onChange={(e)=>setPrice(e.target.value)} className={fieldClass} required />
+            </div>
+            <div>
+              <label htmlFor='edit-discount' className={labelClass}>Discount (%)</label>
+              <input id='edit-discount' type='number' min='0' max='90' step='1' value={discountPercent} onChange={(e)=>setDiscountPercent(e.target.value)} className={fieldClass} />
+              {Number(discountPercent) > 0 && Number(price) > 0 && <p className='text-xs text-green-700 mt-1'>Sale {currency}{salePrice({ price: Number(price), discountPercent: discountPercent })} · Save {currency}{Number(price) - salePrice({ price: Number(price), discountPercent: discountPercent })}</p>}
             </div>
           </div>
 

@@ -3,6 +3,7 @@ import userModel from "../models/userModel.js"
 import productModel from "../models/productModel.js"
 import Stripe from 'stripe'
 import crypto from 'crypto'
+import { salePrice, discountOf } from "../utils/pricing.js"
 import razorpay from 'razorpay'
 
 
@@ -56,7 +57,10 @@ const buildOrderItems = async (requestItems, shippingMethod = 'inside_dhaka') =>
         items.push({
             _id: product._id.toString(),
             name: product.name,
-            price: product.price,
+            // what the customer pays per item (discount applied); original kept for records
+            price: salePrice(product),
+            originalPrice: product.price,
+            discountPercent: discountOf(product),
             // image[0] is the picked photo, which is what order screens show
             image: [product.image[chosen]],
             imageIndex: chosen,
