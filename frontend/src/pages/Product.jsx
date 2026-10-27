@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom'
 import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
+import { trackViewContent } from '../metaPixel';
 
 const Product = () => {
 
@@ -29,6 +30,11 @@ const Product = () => {
   useEffect(()=>{
     fetchProductData();
   },[productId, products])
+
+  // Meta Pixel ViewContent once per product shown
+  useEffect(()=>{
+    if (productData) trackViewContent(productData)
+  },[productData?._id])
 
   return productData ? (
     <div className='border-t pt-10 transition-opacity ease-in duration-500 opacity-100'>

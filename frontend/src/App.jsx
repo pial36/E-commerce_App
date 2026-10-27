@@ -1,5 +1,6 @@
 import React from 'react'
-import { Routes,Route } from 'react-router-dom'
+import { Routes,Route,useLocation } from 'react-router-dom'
+import { trackPageView } from './metaPixel'
 import Home from './pages/Home'
 import Collection from './pages/Collection'
 import About from './pages/About'
@@ -21,6 +22,12 @@ import { useState, useEffect } from 'react';
 
 
 const App = () => {
+
+    // Meta Pixel PageView on first load and every route change
+    const location = useLocation();
+    useEffect(() => {
+      trackPageView();
+    }, [location.pathname]);
 
     // Set initial theme based on local storage or default to light mode
     const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');

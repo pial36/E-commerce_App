@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from 'axios'
 import { refreshSession, setSignedOutHandler } from "../authClient";
 import { makeCartKey } from "../cartKey";
+import { trackAddToCart } from "../metaPixel";
 
 export const ShopContext = createContext();
 
@@ -66,6 +67,8 @@ const readGuestCart = () => {
         }
         setCartItems(cartData);
         setLastAddedId(itemId);
+        const addedProduct = products.find((product) => product._id === itemId);
+        if (addedProduct) trackAddToCart(addedProduct);
         setCartOpen(true);
 
         if (isLoggedIn) {

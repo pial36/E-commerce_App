@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 import { GUEST_ORDER_KEY_PREFIX } from './PlaceOrder'
+import { trackPurchase } from '../metaPixel'
 
 
 // Stripe sends the customer back here after card payment.
@@ -30,6 +31,11 @@ const Verify = () => {
             })
 
             if (response.data.success) {
+                // amount is only returned the first time a payment is confirmed,
+                // so a reload of this page doesn't count the purchase twice
+                if (response.data.amount !== undefined) {
+                    trackPurchase({ orderId, value: response.data.amount })
+                }
                 setCartItems({})
                 localStorage.removeItem(keyName)
                 if (isLoggedIn) {
