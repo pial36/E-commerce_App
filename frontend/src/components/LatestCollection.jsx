@@ -15,7 +15,7 @@ const LatestCollection = () => {
     <div className='my-10'>
       <div className='text-center py-8 text-3xl'>
           <Title text1={'LATEST'} text2={'COLLECTIONS'} />
-          <p className='m-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Consequuntur quos nostrum sapiente ducimus repudiandae tempore recusandae eius nihil vel excepturi impedit pariatur ab unde hic voluptates nesciunt, molestiae nulla sequi.</p>
+          <p className='m-3/4 m-auto text-xs sm:text-sm md:text-base text-gray-600'>Discover the latest styles from VELARIQ, where timeless elegance meets modern fashion. Explore our exclusive collection, thoughtfully curated to bring sophistication and confidence to every look.</p>
 
       </div>
 
