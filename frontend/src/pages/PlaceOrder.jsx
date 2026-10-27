@@ -3,6 +3,7 @@ import { assets } from '../assets/assets'
 import { ShopContext } from '../context/ShopContext'
 import axios from 'axios'
 import { parseCartKey, lineImage } from '../cartKey'
+import { salePrice } from '../pricing'
 import { trackInitiateCheckout, trackPurchase } from '../metaPixel'
 import { toast } from 'react-toastify'
 
@@ -276,7 +277,7 @@ const PlaceOrder = () => {
               <p className='text-sm font-medium text-gray-900 truncate'>{line.product.name}</p>
               <p className='text-xs text-gray-500 mt-0.5'>{line.size}</p>
             </div>
-            <p className='text-sm text-gray-900'>{formatPrice(line.product.price * line.quantity)}</p>
+            <p className='text-sm text-gray-900'>{formatPrice(salePrice(line.product) * line.quantity)}</p>
           </div>
         ))
       }

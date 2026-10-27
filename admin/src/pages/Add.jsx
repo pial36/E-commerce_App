@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { assets } from '../assets/assets'
 import axios from 'axios'
-import { backendUrl } from '../App'
+import { backendUrl, currency } from '../App'
+import { salePrice } from '../pricing'
 import { toast } from 'react-toastify'
 
 const Add = () => {
@@ -14,6 +15,7 @@ const Add = () => {
     const [name, setName] = useState("");
     const [description, setDescription] =useState("");
     const [price,setPrice] = useState("");
+    const [discountPercent,setDiscountPercent] = useState("");
     const [category,setCategory] = useState("Men");
     const [subCategory,setSubCategory] = useState("Topwear");
     const [bestseller,setBestseller] = useState(false);
@@ -29,6 +31,7 @@ const Add = () => {
         formData .append("name",name)
         formData .append("description",description)
         formData .append("price",price)
+        formData .append("discountPercent",discountPercent || 0)
         formData .append("category",category)
         formData .append("subCategory",subCategory)
         formData .append("bestseller",bestseller)
@@ -50,6 +53,7 @@ const Add = () => {
           setImage3(false)
           setImage4(false)
           setPrice('')
+          setDiscountPercent('')
           setBestseller('')
 
         } else {
@@ -128,6 +132,12 @@ const Add = () => {
           <div>
             <p className='mb-2'>Product Price</p>
             <input onChange={(e)=>setPrice(e.target.value)} value={price} className='w-full px-3 py-2 sm:w-[120px]' type='number' placeholder='25' />
+          </div>
+
+          <div>
+            <p className='mb-2'>Discount (%)</p>
+            <input onChange={(e)=>setDiscountPercent(e.target.value)} value={discountPercent} className='w-full px-3 py-2 sm:w-[120px]' type='number' min='0' max='90' step='1' placeholder='0' />
+            {Number(discountPercent) > 0 && Number(price) > 0 && <p className='text-xs text-green-700 mt-1'>Sale {currency}{salePrice({ price: Number(price), discountPercent: discountPercent })} · Save {currency}{Number(price) - salePrice({ price: Number(price), discountPercent: discountPercent })}</p>}
           </div>
         </div>
 

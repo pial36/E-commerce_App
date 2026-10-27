@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
+import { parseDiscountPercent } from "../utils/pricing.js";
 
 // Every product photo is stored at 390x450 (width x height). Cloudinary
 // resizes and crops on upload, keeping the most important part of the photo
@@ -19,6 +20,7 @@ const addProduct = async (req, res) => {
     try {
         
         const { name, description, price, category, subCategory, sizes, bestseller} = req.body;
+        const discountPercent = parseDiscountPercent(req.body.discountPercent);
 
         const image1 = req.files.image1 && req.files.image1[0];
         const image2 = req.files.image2 && req.files.image2[0];
@@ -39,6 +41,7 @@ const addProduct = async (req, res) => {
             description,
             category,
             price: Number(price),
+            discountPercent,
             subCategory,
             bestseller: bestseller === "true" ? true : false,
             sizes: JSON.parse(sizes),
@@ -102,6 +105,7 @@ const updateProduct = async (req, res) => {
         if (name !== undefined) product.name = name
         if (description !== undefined) product.description = description
         if (price !== undefined) product.price = Number(price)
+        if (req.body.discountPercent !== undefined) product.discountPercent = parseDiscountPercent(req.body.discountPercent)
         if (category !== undefined) product.category = category
         if (subCategory !== undefined) product.subCategory = subCategory
         if (sizes !== undefined) product.sizes = JSON.parse(sizes)

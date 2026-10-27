@@ -4,6 +4,7 @@ import { ShopContext } from '../context/ShopContext';
 import { assets } from '../assets/assets';
 import RelatedProducts from '../components/RelatedProducts';
 import { trackViewContent } from '../metaPixel';
+import { discountOf, salePrice } from '../pricing';
 
 const Product = () => {
 
@@ -67,7 +68,14 @@ const Product = () => {
                   <img src={assets.star_dull_icon} alt="" className="w-3 5" />
                   <p className='pl-2'>(122)</p>
                 </div>
-                <p className='mt-5 text-3xl font-medium'>{currency}{productData.price}</p>
+                {
+                  discountOf(productData) > 0 &&
+                  <span className='inline-block mt-4 px-2.5 py-1 rounded bg-green-600 text-white text-xs font-semibold'>Save {currency}{productData.price - salePrice(productData)}</span>
+                }
+                <p className='mt-3 flex flex-wrap items-baseline gap-x-3 text-3xl font-medium'>
+                  {currency}{salePrice(productData)}
+                  {discountOf(productData) > 0 && <><span className='text-lg text-gray-400 line-through'>{currency}{productData.price}</span><span className='text-base font-semibold text-rose-500'>-{discountOf(productData)}%</span></>}
+                </p>
                 <p className='mt-5 text-gray-500 md:w-4/5'>{productData.description}</p>
                 <div className='flex flex-col gap-4 my-8'>
                   <p>Select Size</p>

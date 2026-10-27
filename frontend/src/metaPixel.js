@@ -7,6 +7,8 @@
 // Standard events sent: PageView (every route change), ViewContent,
 // AddToCart, InitiateCheckout and Purchase, with prices in BDT.
 
+import { salePrice } from './pricing'
+
 const PIXEL_ID = (import.meta.env.VITE_META_PIXEL_ID || '').trim()
 const CURRENCY = 'BDT'
 
@@ -55,7 +57,7 @@ export const trackViewContent = (product) => track('ViewContent', {
     content_name: product.name,
     content_category: product.category,
     content_type: 'product',
-    value: product.price,
+    value: salePrice(product),
     currency: CURRENCY,
 })
 
@@ -64,7 +66,7 @@ export const trackAddToCart = (product, quantity = 1) => track('AddToCart', {
     content_name: product.name,
     content_type: 'product',
     contents: [{ id: product._id, quantity }],
-    value: product.price * quantity,
+    value: salePrice(product) * quantity,
     currency: CURRENCY,
 })
 
@@ -72,7 +74,7 @@ export const trackAddToCart = (product, quantity = 1) => track('AddToCart', {
 const contentsOf = (lines) => ({
     content_ids: [...new Set(lines.map(line => line.product._id))],
     content_type: 'product',
-    contents: lines.map(line => ({ id: line.product._id, quantity: line.quantity, item_price: line.product.price })),
+    contents: lines.map(line => ({ id: line.product._id, quantity: line.quantity, item_price: salePrice(line.product) })),
     num_items: lines.reduce((sum, line) => sum + line.quantity, 0),
 })
 

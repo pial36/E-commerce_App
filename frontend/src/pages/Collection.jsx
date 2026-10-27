@@ -3,13 +3,24 @@ import { ShopContext } from '../context/ShopContext'
 import { assets } from '../assets/assets';
 import Title from '../components/Title';
 import ProductItem from '../components/ProductItem';
+import { useSearchParams } from 'react-router-dom';
+import { salePrice } from '../pricing';
+
+const CATEGORIES = ['Men', 'Women', 'Kid']
 
 const Collection = () => {
 
   const { products, search, showSearch } = useContext(ShopContext);
   const [showFilter,setShowFilter] = useState(false);
   const [filterProducters,setFilterProducts] = useState([]);
-  const [category,setCategory] = useState([]);
+  // ?category=Men (from the home page's View all) starts with that box ticked
+  const [searchParams] = useSearchParams();
+  const categoryParam = searchParams.get('category');
+  const [category,setCategory] = useState(CATEGORIES.includes(categoryParam) ? [categoryParam] : []);
+
+  useEffect(()=>{
+    setCategory(CATEGORIES.includes(categoryParam) ? [categoryParam] : [])
+  },[categoryParam])
   const [subCategory,setSubCatagory] = useState([]);
   const [sortType,setSortType] = useState('relavent')
 
@@ -62,11 +73,11 @@ const Collection = () => {
 
     switch (sortType) {
       case 'low-high':
-        setFilterProducts(fpCopy.sort((a,b)=>(a.price - b.price)))
+        setFilterProducts(fpCopy.sort((a,b)=>(salePrice(a) - salePrice(b))))
         break;
 
       case 'high-low':
-        setFilterProducts(fpCopy.sort((a,b)=>(b.price - a.price)))
+        setFilterProducts(fpCopy.sort((a,b)=>(salePrice(b) - salePrice(a))))
         break;
 
         default:
@@ -99,9 +110,9 @@ const Collection = () => {
         <div className={`border border-gray-300 pl-5 py-3 mt-6 ${showFilter ? '' :'hidden'} sm:block`}>
             <p className='mb-3 text-sm font-medium'>CATEGORIES</p>
             <div className='flex flex-col gap-2 text-sm font-light text-gray-700'>
-              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Men'} onChange={toggleCategory}/>Men</p>
-              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Women'} onChange={toggleCategory}/>Women</p>
-              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Kid'} onChange={toggleCategory}/>Kid
+              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Men'} checked={category.includes('Men')} onChange={toggleCategory}/>Men</p>
+              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Women'} checked={category.includes('Women')} onChange={toggleCategory}/>Women</p>
+              <p className='flex gap-2'><input className='w-3' type="checkbox" value={'Kid'} checked={category.includes('Kid')} onChange={toggleCategory}/>Kid
               </p>
             </div>
         </div>
@@ -135,7 +146,7 @@ const Collection = () => {
         <div className='grid grid-col-2 md:grid-cols-3 lg:grid-cols-4 gap-4 gap-y-6'>
           {
             filterProducters.map((item,index)=>(
-              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} />
+              <ProductItem key={index} name={item.name} id={item._id} price={item.price} image={item.image} discountPercent={item.discountPercent} />
             ))
           }
         </div>
