@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import Title from './Title';
 import ProductItem from './ProductItem';
+import { Link } from 'react-router-dom';
+
+const LATEST_COUNT = 30
 
 // category pills above the grid; value matches product.category
 const FILTERS = [
@@ -18,8 +21,10 @@ const LatestCollection = () => {
     const [category,setCategory] = useState(null)
 
     useEffect(()=>{
-        const filtered = category ? products.filter(item => item.category === category) : products
-        setLatestProducts(filtered.slice(0,10))
+        // newest first: the most recently added products
+        const newest = [...products].sort((a,b) => (b.date || 0) - (a.date || 0))
+        const filtered = category ? newest.filter(item => item.category === category) : newest
+        setLatestProducts(filtered.slice(0,LATEST_COUNT))
     },[products, category])
   return (
     <div className='my-10'>
@@ -60,6 +65,21 @@ const LatestCollection = () => {
       {
         products.length > 0 && latestProducts.length === 0 &&
         <p className='text-center text-sm text-gray-500 py-10'>No products in this category yet.</p>
+      }
+
+      {/* View all: opens the collection page filtered to the selected pill */}
+      {
+        products.length > 0 &&
+        <div className='flex justify-center mt-10'>
+          <Link
+            to={category ? `/collection?category=${category}` : '/collection'}
+            aria-label={category ? `View all ${category} products` : 'View all products'}
+            className='inline-flex items-center gap-2 px-8 py-3 border border-gray-900 text-sm font-medium tracking-[0.15em] text-gray-900 hover:bg-gray-900 hover:text-white transition-colors'
+          >
+            VIEW ALL
+            <span aria-hidden='true'>&rarr;</span>
+          </Link>
+        </div>
       }
       
     </div>
