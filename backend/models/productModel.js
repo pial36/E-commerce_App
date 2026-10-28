@@ -10,6 +10,8 @@ const productSchema = new mongoose.Schema({
     category: { type: String, required: true },
     subCategory: { type: String, required: true },
     sizes: { type: Array, required: true },
+    // optional size chart: [{ size, chest, length }] in inches
+    sizeChart: { type: [{ _id: false, size: String, chest: Number, length: Number }], default: [] },
     bestseller: { type:Boolean },
     date: { type: Number, required: true },
 })
