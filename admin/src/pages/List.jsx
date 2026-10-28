@@ -17,7 +17,8 @@ const List = () => {
       
       const response = await axios.get(backendUrl + '/api/product/list')
       if (response.data.success) {
-        setList(response.data.products);
+        // newest first, so recently added products are at the top
+        setList([...response.data.products].sort((a,b) => (b.date || 0) - (a.date || 0)));
       }
       else{
         toast.error(response.data.message)
