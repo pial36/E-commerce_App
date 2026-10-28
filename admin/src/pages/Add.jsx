@@ -3,6 +3,7 @@ import { assets } from '../assets/assets'
 import axios from 'axios'
 import { backendUrl, currency } from '../App'
 import { salePrice } from '../pricing'
+import SizeChartEditor, { stateToChart } from '../components/SizeChartEditor'
 import { toast } from 'react-toastify'
 
 const Add = () => {
@@ -20,6 +21,7 @@ const Add = () => {
     const [subCategory,setSubCategory] = useState("Topwear");
     const [bestseller,setBestseller] = useState(false);
     const [sizes,setSizes] = useState([]);
+    const [sizeChart,setSizeChart] = useState({});
 
 
       const onSubmitHandler = async (e) => {
@@ -36,6 +38,7 @@ const Add = () => {
         formData .append("subCategory",subCategory)
         formData .append("bestseller",bestseller)
         formData .append("sizes",JSON.stringify(sizes))
+        formData .append("sizeChart",JSON.stringify(stateToChart(sizeChart, sizes)))
         
         image1 && formData .append("image1",image1)
         image2 && formData .append("image2",image2)
@@ -54,6 +57,7 @@ const Add = () => {
           setImage4(false)
           setPrice('')
           setDiscountPercent('')
+          setSizeChart({})
           setBestseller('')
 
         } else {
@@ -165,6 +169,8 @@ const Add = () => {
             </div>
           </div>
         </div>
+
+        <SizeChartEditor sizes={sizes} chart={sizeChart} onChange={setSizeChart} />
 
         <div className='flex gap-2 mt-2'>
           <input onChange={() => setBestseller(prev => !prev)} checked={bestseller} type="checkbox" id='bestseller' />

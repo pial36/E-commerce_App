@@ -3,6 +3,7 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { backendUrl, currency } from '../App'
 import { salePrice } from '../pricing'
+import SizeChartEditor, { chartToState, stateToChart } from './SizeChartEditor'
 import { assets } from '../assets/assets'
 
 const CATEGORIES = ['Men', 'Women', 'Kid']
@@ -21,6 +22,7 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
   const [category,setCategory] = useState(product.category)
   const [subCategory,setSubCategory] = useState(product.subCategory)
   const [sizes,setSizes] = useState(product.sizes || [])
+  const [sizeChart,setSizeChart] = useState(()=>chartToState(product.sizeChart))
   const [bestseller,setBestseller] = useState(!!product.bestseller)
   // a File per slot when the admin picks a replacement; null keeps the current image
   const [newImages,setNewImages] = useState([null, null, null, null])
@@ -53,6 +55,7 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
       formData.append('category', category)
       formData.append('subCategory', subCategory)
       formData.append('sizes', JSON.stringify(sizes))
+      formData.append('sizeChart', JSON.stringify(stateToChart(sizeChart, sizes)))
       formData.append('bestseller', bestseller)
       newImages.forEach((file, index) => file && formData.append(`image${index + 1}`, file))
 
@@ -158,6 +161,8 @@ const EditProductModal = ({ product, onClose, onSaved }) => {
             <input type='checkbox' checked={bestseller} onChange={()=>setBestseller(!bestseller)} className='w-4 h-4 accent-gray-900' />
             Show in bestsellers
           </label>
+
+          <SizeChartEditor sizes={sizes} chart={sizeChart} onChange={setSizeChart} />
         </div>
 
         <div className='flex justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50 rounded-b-xl'>
